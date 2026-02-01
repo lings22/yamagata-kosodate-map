@@ -1,0 +1,58 @@
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import "./globals.css";
+import { AuthProvider } from '@/contexts/AuthContext'
+
+export const metadata: Metadata = {
+  title: "山形子育てマップ | 授乳室・おむつ替え台・子ども椅子情報",
+  description: "山形市の授乳室・おむつ替え台・子ども椅子のある施設を簡単に検索できるマップサービス。子育て中のママパパを応援します。",
+  keywords: ["山形", "子育て", "授乳室", "おむつ替え", "子ども椅子", "ベビーカー", "マップ"],
+  authors: [{ name: "株式会社パルティード", url: "https://partido.co.jp/" }],
+  creator: "株式会社パルティード",
+  publisher: "株式会社パルティード",
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: "https://yamagata-kosodate-map.vercel.app/",
+    title: "山形子育てマップ",
+    description: "山形市の授乳室・おむつ替え台・子ども椅子情報を検索",
+    siteName: "山形子育てマップ",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "山形子育てマップ",
+    description: "山形市の授乳室・おむつ替え台・子ども椅子情報を検索",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ja">
+      <head>
+        <Script
+          strategy="beforeInteractive"
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+        />
+      </head>
+      <body className="antialiased">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
