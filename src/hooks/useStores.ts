@@ -17,8 +17,13 @@ export type Store = {
   has_chair_6_18m: boolean
   has_chair_18m_3y: boolean
   has_chair_3y_plus: boolean
+  chair_count_0_6m?: number
+  chair_count_6_18m?: number
+  chair_count_18m_3y?: number
+  chair_count_3y_plus?: number
   has_tatami_room: boolean
   stroller_accessible: boolean
+  posted_by?: string
   has_parking: boolean
   parking_detail: string | null
   has_private_room: boolean

@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useStores, Store } from '@/hooks/useStores'
@@ -8,6 +9,7 @@ import Footer from '@/components/Footer'
 
 export default function StoresPage() {
   const { stores, loading } = useStores()
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
 
   const [filters, setFilters] = useState({
@@ -89,12 +91,23 @@ export default function StoresPage() {
               </span>
             </Link>
             
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
-            >
-              🗺️ 地図で見る
-            </Link>
+<div className="flex items-center gap-2 sm:gap-3">
+              {user && (
+                <Link
+                  href="/add-store"
+                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+                >
+                  <span className="hidden sm:inline">➕ 店舗を追加</span>
+                  <span className="sm:hidden">➕</span>
+                </Link>
+              )}
+              <Link
+                href="/"
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+              >
+                🗺️ 地図で見る
+              </Link>
+            </div>
           </div>
         </div>
       </header>

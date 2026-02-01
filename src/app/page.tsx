@@ -30,6 +30,11 @@ export default function HomePage() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  const handleLogout = async () => {
+    await signOut()
+    router.refresh()
+  }
+
   const [filters, setFilters] = useState({
     hasChair: false,
     hasTatamiRoom: false,
@@ -42,15 +47,6 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      router.push('/')
-    } catch (error) {
-      console.error('ログアウトエラー:', error)
-    }
-  }
 
   const filteredStores = useMemo(() => {
     let result = stores
@@ -117,22 +113,26 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                 β版
               </span>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600 hidden sm:block">
-                    {user.email}
-                  </span>
+                  <Link
+                    href="/add-store"
+                    className="px-3 sm:px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition text-xs sm:text-sm font-medium"
+                  >
+                    <span className="hidden sm:inline">➕ 店舗を追加</span>
+                    <span className="sm:hidden">➕ 追加</span>
+                  </Link>
                   <button
-                    onClick={handleSignOut}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                    onClick={handleLogout}
+                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
                   >
                     ログアウト
                   </button>
@@ -140,7 +140,7 @@ export default function HomePage() {
               ) : (
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
                 >
                   ログイン
                 </Link>
@@ -177,10 +177,8 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* PC: 左側店舗一覧 / スマホ: タブで切り替え */}
-        <div className={`${
-          activeTab === 'list' ? 'block' : 'hidden'
-        } lg:block w-full lg:w-96 border-r border-gray-200 bg-white overflow-hidden flex flex-col`}>
+        {/* PC: 左側店舗一覧 */}
+        <div className="hidden lg:flex lg:flex-col w-96 border-r border-gray-200 bg-white overflow-hidden">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold text-gray-800">店舗一覧</h2>
@@ -210,7 +208,45 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
+          </div>
+        </div>
+
+        {/* スマホ: タブで切り替え（一覧表示） */}
+        <div className={`${
+          activeTab === 'list' ? 'flex flex-col' : 'hidden'
+        } lg:hidden w-full bg-white`}>
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-800">店舗一覧</h2>
+              <p className="text-sm text-gray-600">全{filteredStores.length}件</p>
+            </div>
+            {/* スマホ版検索窓 */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="店舗名・住所で検索"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
           </div>
         </div>
@@ -219,7 +255,7 @@ export default function HomePage() {
         <div className={`${
           activeTab === 'map' ? 'flex flex-col' : 'hidden'
         } lg:flex lg:flex-col flex-1 relative`}>
-          {/* スマホ版検索エリア（画面上部1/4） */}
+          {/* スマホ版検索エリア */}
           <div className="lg:hidden bg-white border-b border-gray-200 overflow-hidden flex flex-col" style={{ height: '50vh' }}>
             <div className="p-4 pb-2">
               <h3 className="text-lg font-bold text-gray-800 mb-3">検索</h3>
@@ -272,8 +308,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 地図エリア（スマホ: 3/4、PC: 全体） */}
-          {/* 地図エリア（スマホ: 調整済み、PC: 全体） */}
+          {/* 地図エリア */}
           <div className={`flex-1 relative ${activeTab === 'map' ? 'lg:flex-1' : ''}`} style={{ height: activeTab === 'map' ? '50vh' : 'auto' }}>
             <Map stores={filteredStores} selectedStore={selectedStore} />
             
@@ -291,14 +326,14 @@ export default function HomePage() {
                   <span className="text-[#333333]">子ども椅子あり</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.hasTatamiRoom}
-                  onChange={() => handleFilterChange('hasTatamiRoom')}
-                />
-                <span className="text-[#333333]">座敷あり</span>
-              </label>
+                  <input 
+                    type="checkbox" 
+                    className="rounded"
+                    checked={filters.hasTatamiRoom}
+                    onChange={() => handleFilterChange('hasTatamiRoom')}
+                  />
+                  <span className="text-[#333333]">座敷あり</span>
+                </label>
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input 
                     type="checkbox" 
@@ -337,12 +372,6 @@ export default function HomePage() {
                 </label>
               </div>
             </div>
-
-            <button className="absolute bottom-6 right-6 bg-orange-400 hover:bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg font-semibold transition flex items-center gap-2">
-              <span className="text-xl">+</span>
-              <span className="hidden sm:inline">店舗を追加</span>
-              <span className="sm:hidden">追加</span>
-            </button>
           </div>
         </div>
       </div>

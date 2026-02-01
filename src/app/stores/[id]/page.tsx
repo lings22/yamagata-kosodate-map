@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -11,6 +12,7 @@ import Footer from '@/components/Footer'
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const storeId = params.id as string
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
@@ -68,10 +70,22 @@ export default function StoreDetailPage() {
   const displayLikesCount = likesCount || store.likes_count
 
   const chairs = []
-  if (store.has_chair_0_6m) chairs.push('0-6ヶ月')
-  if (store.has_chair_6_18m) chairs.push('6-18ヶ月')
-  if (store.has_chair_18m_3y) chairs.push('18ヶ月-3歳')
-  if (store.has_chair_3y_plus) chairs.push('3歳以上')
+  if (store.has_chair_0_6m) {
+    const count = (store as any).chair_count_0_6m
+    chairs.push(count > 0 ? `0-6ヶ月: ${count}台` : '0-6ヶ月')
+  }
+  if (store.has_chair_6_18m) {
+    const count = (store as any).chair_count_6_18m
+    chairs.push(count > 0 ? `6-18ヶ月: ${count}台` : '6-18ヶ月')
+  }
+  if (store.has_chair_18m_3y) {
+    const count = (store as any).chair_count_18m_3y
+    chairs.push(count > 0 ? `18ヶ月-3歳: ${count}台` : '18ヶ月-3歳')
+  }
+  if (store.has_chair_3y_plus) {
+    const count = (store as any).chair_count_3y_plus
+    chairs.push(count > 0 ? `3歳以上: ${count}台` : '3歳以上')
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -88,7 +102,16 @@ export default function StoreDetailPage() {
               </span>
             </Link>
             
-            <div className="flex items-center gap-3">
+<div className="flex items-center gap-2 sm:gap-3">
+              {user && (
+                <Link
+                  href="/add-store"
+                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+                >
+                  <span className="hidden sm:inline">➕ 店舗を追加</span>
+                  <span className="sm:hidden">➕</span>
+                </Link>
+              )}
               <Link
                 href="/stores"
                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
@@ -114,13 +137,24 @@ export default function StoreDetailPage() {
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
               {store.name}
             </h1>
-            <button
-              onClick={toggleLike}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-pink-100 hover:bg-pink-200 transition self-start"
-            >
-              <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
-              <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleLike}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-pink-100 hover:bg-pink-200 transition"
+              >
+                <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
+                <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
+              </button>
+              {user && store.posted_by === user.id && (
+                <Link
+                  href={`/stores/${store.id}/edit`}
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
+                >
+                  <span className="hidden sm:inline">✏️ 編集</span>
+                  <span className="sm:hidden">✏️</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 text-gray-700">
@@ -189,6 +223,9 @@ export default function StoreDetailPage() {
                     </span>
                   ))}
                 </div>
+                <p className="text-sm text-gray-500 italic ml-8 mt-2">
+                  ※台数は未確認です。情報お待ちしております
+                </p>
               </div>
             )}
 

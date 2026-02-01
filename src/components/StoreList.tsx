@@ -37,7 +37,7 @@ export default function StoreList({ stores = [], onStoreClick }: StoreListProps)
   }
 
   return (
-    <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 64px)' }}>
+    <div className="p-4 space-y-4 overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
       {stores.map((store) => (
         <div 
           key={store.id}
@@ -72,7 +72,7 @@ export default function StoreList({ stores = [], onStoreClick }: StoreListProps)
               </span>
             )}
             {(store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus) && (
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" title="台数は未確認です">
                 🪑 子ども椅子
               </span>
             )}
