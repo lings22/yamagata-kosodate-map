@@ -281,10 +281,20 @@ export default function StoreDetailPage() {
 
         {/* 地図 */}
         <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">アクセス</h2>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}+${store.latitude},${store.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition flex items-center gap-2"
+            >
+              📍 Googleマップで開く
+            </a>
+          </div>
           <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden">
             <iframe
-              src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(store.name)}+${store.latitude},${store.longitude}&z=15&output=embed`}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -292,7 +302,7 @@ export default function StoreDetailPage() {
             />
           </div>
         </div>
-      </div>
+      </div>  {/* ← ここに </div> を追加（max-w-4xlのdivを閉じる） */}
       <Footer />
     </div>
   )
