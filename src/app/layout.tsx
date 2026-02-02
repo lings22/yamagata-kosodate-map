@@ -4,23 +4,23 @@ import "./globals.css";
 import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
-  title: "山形子育てマップ | 授乳室・おむつ替え台・子ども椅子情報",
+  title: "山形てくてくマップ | 授乳室・おむつ替え台・子ども椅子情報",
   description: "山形市の授乳室・おむつ替え台・子ども椅子のある施設を簡単に検索できるマップサービス。子育て中のママパパを応援します。",
-  keywords: ["山形", "子育て", "授乳室", "おむつ替え", "子ども椅子", "ベビーカー", "マップ"],
+  keywords: ["山形", "子育て", "授乳室", "おむつ替え", "子ども椅子", "ベビーカー", "マップ", "てくてく"],
   authors: [{ name: "株式会社パルティード", url: "https://partido.co.jp/" }],
   creator: "株式会社パルティード",
   publisher: "株式会社パルティード",
   openGraph: {
     type: "website",
     locale: "ja_JP",
-    url: "https://yamagata-kosodate-map.vercel.app/",
-    title: "山形子育てマップ",
+    url: "https://yamagata-tekuteku-map.jp/",
+    title: "山形てくてくマップ",
     description: "山形市の授乳室・おむつ替え台・子ども椅子情報を検索",
-    siteName: "山形子育てマップ",
+    siteName: "山形てくてくマップ",
   },
   twitter: {
     card: "summary_large_image",
-    title: "山形子育てマップ",
+    title: "山形てくてくマップ",
     description: "山形市の授乳室・おむつ替え台・子ども椅子情報を検索",
   },
   robots: {

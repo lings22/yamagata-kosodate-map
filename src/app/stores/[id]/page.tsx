@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
@@ -12,16 +12,26 @@ import Footer from '@/components/Footer'
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isAdmin } = useAuth()
-  const storeId = params.id as string
+  const { user, isAdmin, loading: authLoading } = useAuth()
+  const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
-  const { isLiked, likesCount, toggleLike } = useLikes(storeId)
+  
+  // Supabaseクライアントを一度だけ作成
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
+  // 店舗データを認証状態に関係なく即座に取得
   useEffect(() => {
+    if (!storeId) {
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+
     const fetchStore = async () => {
       try {
-        const supabase = createClient()
         const { data, error } = await supabase
           .from('stores')
           .select('*')
@@ -29,22 +39,33 @@ export default function StoreDetailPage() {
           .single()
 
         if (error) throw error
-        setStore(data)
+        if (isMounted) {
+          setStore(data)
+        }
       } catch (err) {
         console.error('店舗取得エラー:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchStore()
-  }, [storeId])
+
+    return () => {
+      isMounted = false
+    }
+  }, [storeId, supabase])
+
+  // useLikesは店舗データ取得後に呼ぶ（storeIdが確定してから）
+  const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
 
   const handleDelete = async () => {
+    if (!storeId) return
     if (!confirm('本当にこの店舗を削除しますか？この操作は取り消せません。')) return
 
     try {
-      const supabase = createClient()
       const { error } = await supabase
         .from('stores')
         .delete()
@@ -60,6 +81,8 @@ export default function StoreDetailPage() {
     }
   }
 
+  // 店舗データの読み込み中のみローディング表示
+  // 認証の読み込みは待たない
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
@@ -106,7 +129,8 @@ export default function StoreDetailPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {user && (
+              {/* 認証読み込み中はボタンを表示しない、読み込み完了後に表示 */}
+              {!authLoading && user && (
                 <Link
                   href="/add-store"
                   className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
@@ -148,7 +172,8 @@ export default function StoreDetailPage() {
                 <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
                 <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
               </button>
-              {user && (isAdmin || store.posted_by === user.id) && (
+              {/* 認証読み込み完了後に編集・削除ボタンを表示 */}
+              {!authLoading && user && (isAdmin || store.posted_by === user.id) && (
                 <>
                   <Link
                     href={`/stores/${store.id}/edit`}
@@ -268,27 +293,27 @@ export default function StoreDetailPage() {
         )}
 
         {/* 地図 */}
-<div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-  <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
-  <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden relative">
-    <iframe
-      src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
-      width="100%"
-      height="100%"
-      style={{ border: 0 }}
-      loading="lazy"
-    />
-    <div className="absolute top-3 left-3 bg-white rounded-lg shadow-lg p-3 max-w-[220px]">
-      <p className="font-semibold text-gray-800 text-sm mb-1">{store.name}</p>
-      <button
-        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name + ' ' + store.address)}`, '_blank')}
-        className="text-blue-600 text-xs hover:underline"
-      >
-        Googleマップで開く →
-      </button>
-    </div>
-  </div>
-</div>
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
+          <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden relative">
+            <iframe
+              src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+            />
+            <div className="absolute top-3 left-3 bg-white rounded-lg shadow-lg p-3 max-w-[220px]">
+              <p className="font-semibold text-gray-800 text-sm mb-1">{store.name}</p>
+              <button
+                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name + ' ' + store.address)}`, '_blank')}
+                className="text-blue-600 text-xs hover:underline"
+              >
+                Googleマップで開く →
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <Footer />
     </div>

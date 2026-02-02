@@ -92,7 +92,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
               <div style="margin-bottom: 12px;">
                 <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">子ども椅子: あり</div>
                 <div style="font-size: 11px; color: #6b7280; font-style: italic;">
-                  ※詳細は店舗にお問い合わせください
+                  ※台数は未確認です。情報お待ちしております
                 </div>
               </div>
             ` : ''}
