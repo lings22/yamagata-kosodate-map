@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -9,32 +9,43 @@ export function useLikes(storeId: string) {
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  
+  // Supabaseクライアントを一度だけ作成
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   useEffect(() => {
+    let isMounted = true
+    
     const fetchLikeStatus = async () => {
-      if (!user) return
+      // user.id で比較（userオブジェクト全体ではなく）
+      if (!user?.id) return
 
       try {
-        const supabase = createClient()
-        
         const { data: likeData } = await supabase
           .from('store_likes')
           .select('id')
           .eq('store_id', storeId)
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()  // single() → maybeSingle() に変更（データがない場合もエラーにならない）
 
-        setIsLiked(!!likeData)
+        if (isMounted) {
+          setIsLiked(!!likeData)
+        }
       } catch (err) {
         console.error('いいね状態取得エラー:', err)
       }
     }
 
     fetchLikeStatus()
-  }, [storeId, user])
+    
+    return () => {
+      isMounted = false
+    }
+  }, [storeId, user?.id, supabase])  // user → user?.id に変更
 
-  const toggleLike = async () => {
-    if (!user) {
+  const toggleLike = useCallback(async () => {
+    if (!user?.id) {
       alert('いいねするにはログインが必要です')
       window.location.href = '/login'
       return
@@ -42,8 +53,6 @@ export function useLikes(storeId: string) {
 
     setLoading(true)
     try {
-      const supabase = createClient()
-
       if (isLiked) {
         const { error } = await supabase
           .from('store_likes')
@@ -69,7 +78,7 @@ export function useLikes(storeId: string) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id, storeId, isLiked, supabase])
 
   return { isLiked, likesCount, loading, toggleLike }
 }
