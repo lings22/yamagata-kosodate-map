@@ -40,6 +40,26 @@ export default function StoreDetailPage() {
     fetchStore()
   }, [storeId])
 
+  const handleDelete = async () => {
+    if (!confirm('本当にこの店舗を削除しますか？この操作は取り消せません。')) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('stores')
+        .delete()
+        .eq('id', storeId)
+
+      if (error) throw error
+
+      alert('店舗を削除しました')
+      router.push('/')
+    } catch (error) {
+      console.error('削除エラー:', error)
+      alert('削除に失敗しました')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
@@ -68,7 +88,6 @@ export default function StoreDetailPage() {
   }
 
   const displayLikesCount = likesCount || store.likes_count
-
   const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
 
   return (
@@ -79,14 +98,14 @@ export default function StoreDetailPage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                 β版
               </span>
             </Link>
             
-<div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user && (
                 <Link
                   href="/add-store"
@@ -98,15 +117,15 @@ export default function StoreDetailPage() {
               )}
               <Link
                 href="/stores"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
               >
-                📋 一覧に戻る
+                📋 一覧
               </Link>
               <Link
                 href="/"
-                className="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
               >
-                🗺️ 地図で見る
+                🗺️ 地図
               </Link>
             </div>
           </div>
@@ -121,7 +140,7 @@ export default function StoreDetailPage() {
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
               {store.name}
             </h1>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={toggleLike}
                 className="flex items-center gap-2 px-6 py-3 rounded-full bg-pink-100 hover:bg-pink-200 transition"
@@ -237,18 +256,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* 個室 */}
-            {store.has_private_room && (
-              <div className="border-l-4 border-indigo-400 pl-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">🚪</span>
-                  <h3 className="text-lg font-semibold text-gray-800">個室あり</h3>
-                </div>
-                {store.private_room_detail && (
-                  <p className="text-gray-600 ml-8">{store.private_room_detail}</p>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
