@@ -284,7 +284,7 @@ export default function StoreDetailPage() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800">アクセス</h2>
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}+${store.latitude},${store.longitude}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}+${encodeURIComponent(store.address)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition flex items-center gap-2"

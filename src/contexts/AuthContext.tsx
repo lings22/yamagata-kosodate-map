@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
 
@@ -20,7 +20,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const supabase = createClient()
+  
+  // useRefで一度だけクライアントを作成
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase
@@ -33,8 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    let isMounted = true
+
     // 現在のユーザーを取得
     supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!isMounted) return
       setUser(user)
       if (user) {
         await checkAdmin(user.id)
@@ -45,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!isMounted) return
         setUser(session?.user ?? null)
         if (session?.user) {
           await checkAdmin(session.user.id)
@@ -55,8 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [])  // ← 依存配列を空に
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
