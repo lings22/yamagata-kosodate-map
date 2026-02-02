@@ -6,30 +6,17 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase'
 
-type PlaceResult = {
-  place_id: string
-  name: string
-  formatted_address: string
-  geometry: {
-    location: {
-      lat: number
-      lng: number
-    }
-  }
-  formatted_phone_number?: string
-}
-
 export default function AddStorePage() {
   const { user } = useAuth()
   const router = useRouter()
   const autocompleteInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [showManualInput, setShowManualInput] = useState(false)
-  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null)
+  const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null)
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)
   const [duplicateStore, setDuplicateStore] = useState<any>(null)
 
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     address: '',
     latitude: 0,
@@ -48,8 +35,6 @@ const [formData, setFormData] = useState({
     has_diaper_changing: false,
     diaper_changing_detail: '',
     stroller_accessible: false,
-    has_private_room: false,
-    private_room_detail: '',
     comment: '',
   })
 
@@ -101,13 +86,20 @@ const [formData, setFormData] = useState({
         return
       }
 
-      setSelectedPlace(place as PlaceResult)
+      const location = place.geometry.location
+      const lat = location.lat
+      const lng = location.lng
+
+      const latitude = typeof lat === 'function' ? lat() : (lat || 0)
+      const longitude = typeof lng === 'function' ? lng() : (lng || 0)
+
+      setSelectedPlace(place)
       setFormData(prev => ({
         ...prev,
         name: place.name || '',
         address: place.formatted_address || '',
-        latitude: place.geometry!.location.lat(),
-        longitude: place.geometry!.location.lng(),
+        latitude: latitude,
+        longitude: longitude,
         phone: place.formatted_phone_number || '',
       }))
     })
@@ -215,6 +207,10 @@ const [formData, setFormData] = useState({
         has_chair_6_18m: formData.has_child_chair || formData.chair_count_6_18m > 0,
         has_chair_18m_3y: formData.has_child_chair || formData.chair_count_18m_3y > 0,
         has_chair_3y_plus: formData.has_child_chair || formData.chair_count_3y_plus > 0,
+        chair_count_0_6m: formData.chair_count_0_6m,
+        chair_count_6_18m: formData.chair_count_6_18m,
+        chair_count_18m_3y: formData.chair_count_18m_3y,
+        chair_count_3y_plus: formData.chair_count_3y_plus,
         has_tatami_room: formData.has_tatami_room,
         has_parking: formData.has_parking,
         parking_detail: formData.parking_detail,
@@ -223,8 +219,6 @@ const [formData, setFormData] = useState({
         has_diaper_changing: formData.has_diaper_changing,
         diaper_changing_detail: formData.diaper_changing_detail,
         stroller_accessible: formData.stroller_accessible,
-        has_private_room: formData.has_private_room,
-        private_room_detail: formData.private_room_detail,
         comment: formData.comment,
         posted_by: user?.id,
       })
@@ -493,7 +487,7 @@ const [formData, setFormData] = useState({
                     <textarea
                       value={formData.comment}
                       onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                      placeholder="店舗に関する口コミの記載をお願いします！"
+                      placeholder="店舗に関する口コミを記載してください"
                       rows={4}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
                     />
