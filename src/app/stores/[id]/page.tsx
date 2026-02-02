@@ -268,18 +268,27 @@ export default function StoreDetailPage() {
         )}
 
         {/* 地図 */}
-        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
-          <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden">
-            <iframe
-              src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-            />
-          </div>
-        </div>
+<div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+  <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
+  <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden relative">
+    <iframe
+      src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
+      width="100%"
+      height="100%"
+      style={{ border: 0 }}
+      loading="lazy"
+    />
+    <div className="absolute top-3 left-3 bg-white rounded-lg shadow-lg p-3 max-w-[220px]">
+      <p className="font-semibold text-gray-800 text-sm mb-1">{store.name}</p>
+      <button
+        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name + ' ' + store.address)}`, '_blank')}
+        className="text-blue-600 text-xs hover:underline"
+      >
+        Googleマップで開く →
+      </button>
+    </div>
+  </div>
+</div>
       </div>
       <Footer />
     </div>
