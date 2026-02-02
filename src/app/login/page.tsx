@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)  // 追加
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { signIn, signUp } = useAuth()
@@ -20,13 +21,19 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setMessage(null)
     setLoading(true)
 
     try {
       await signIn(email, password)
       router.push('/')
     } catch (err: any) {
-      setError(err.message || 'ログインに失敗しました')
+      // メール未確認の場合のエラーメッセージを分かりやすく
+      if (err.message?.includes('Email not confirmed')) {
+        setError('メールアドレスが確認されていません。確認メール内のリンクをクリックしてください。')
+      } else {
+        setError(err.message || 'ログインに失敗しました')
+      }
     } finally {
       setLoading(false)
     }
@@ -35,6 +42,7 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setMessage(null)
 
     if (password !== confirmPassword) {
       setError('パスワードが一致しません')
@@ -50,12 +58,23 @@ export default function LoginPage() {
 
     try {
       await signUp(email, password)
-      router.push('/')
+      // リダイレクトせずにメッセージを表示
+      setMessage('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。')
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
     } catch (err: any) {
       setError(err.message || '登録に失敗しました')
     } finally {
       setLoading(false)
     }
+  }
+
+  // タブ切り替え時にメッセージとエラーをクリア
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab)
+    setError(null)
+    setMessage(null)
   }
 
   return (
@@ -75,7 +94,7 @@ export default function LoginPage() {
           {/* タブ */}
           <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
             <button
-              onClick={() => setActiveTab('login')}
+              onClick={() => handleTabChange('login')}
               className={`flex-1 py-3 rounded-lg font-semibold transition ${
                 activeTab === 'login'
                   ? 'bg-white text-orange-500 shadow'
@@ -85,7 +104,7 @@ export default function LoginPage() {
               ログイン
             </button>
             <button
-              onClick={() => setActiveTab('register')}
+              onClick={() => handleTabChange('register')}
               className={`flex-1 py-3 rounded-lg font-semibold transition ${
                 activeTab === 'register'
                   ? 'bg-white text-orange-500 shadow'
@@ -154,58 +173,69 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <div>
-                <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-2">
-                  メールアドレス
-                </label>
-                <input
-                  id="register-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
-                  placeholder="example@email.com"
-                />
-              </div>
+              {message && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                  <p className="font-semibold mb-1">✅ {message}</p>
+                  <p className="text-sm">メールが届かない場合は、迷惑メールフォルダをご確認ください。</p>
+                </div>
+              )}
 
-              <div>
-                <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
-                  パスワード（6文字以上）
-                </label>
-                <input
-                  id="register-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
-                  placeholder="••••••••"
-                />
-              </div>
+              {!message && (
+                <>
+                  <div>
+                    <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-2">
+                      メールアドレス
+                    </label>
+                    <input
+                      id="register-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
+                      placeholder="example@email.com"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
-                  パスワード（確認）
-                </label>
-                <input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
-                  placeholder="••••••••"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
+                      パスワード（6文字以上）
+                    </label>
+                    <input
+                      id="register-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
+                      placeholder="••••••••"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? '登録中...' : '新規登録'}
-              </button>
+                  <div>
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
+                      パスワード（確認）
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? '登録中...' : '新規登録'}
+                  </button>
+                </>
+              )}
             </form>
           )}
 

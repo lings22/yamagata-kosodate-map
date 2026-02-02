@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Store } from '@/hooks/useStores'
 
 interface MapProps {
@@ -13,6 +14,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
   const googleMapRef = useRef<google.maps.Map | null>(null)
   const markersRef = useRef<google.maps.Marker[]>([])
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null)
+  const router = useRouter()
 
   // 地図を初期化（一度だけ）
   useEffect(() => {
@@ -75,6 +77,9 @@ export default function Map({ stores, selectedStore }: MapProps) {
         if (store.stroller_accessible) facilities.push('🚼 ベビーカーOK')
         if (store.has_parking) facilities.push('🅿️ 駐車場')
 
+        // ボタンにIDを付けて、後からイベントリスナーを追加
+        const buttonId = `detail-btn-${store.id}`
+
         const contentString = `
           <div style="padding: 12px; max-width: 280px; font-family: sans-serif;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #333333;">
@@ -103,14 +108,40 @@ export default function Map({ stores, selectedStore }: MapProps) {
                 </div>
               </div>
             ` : ''}
-            <a href="/stores/${store.id}" style="display: inline-block; margin-top: 8px; padding: 8px 16px; background: #fb923c; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600;">
+            <button 
+              id="${buttonId}"
+              style="display: inline-block; margin-top: 8px; padding: 12px 20px; background: #fb923c; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;"
+            >
               詳細を見る
-            </a>
+            </button>
           </div>
         `
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: contentString,
+        })
+
+        // InfoWindowが開いた後にボタンにイベントリスナーを追加
+        infoWindow.addListener('domready', () => {
+          const button = document.getElementById(buttonId)
+          if (button) {
+            // 既存のイベントリスナーを削除してから追加
+            const newButton = button.cloneNode(true) as HTMLElement
+            button.parentNode?.replaceChild(newButton, button)
+            
+            newButton.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              router.push(`/stores/${store.id}`)
+            })
+            
+            // タッチイベントも追加（iOS Safari対策）
+            newButton.addEventListener('touchend', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              router.push(`/stores/${store.id}`)
+            })
+          }
         })
 
         infoWindow.open(googleMapRef.current!, marker)
@@ -121,7 +152,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
     })
 
     console.log(`マーカー生成完了: ${markersRef.current.length}個`)
-  }, [stores])
+  }, [stores, router])
 
   // 選択された店舗にフォーカス
   useEffect(() => {
