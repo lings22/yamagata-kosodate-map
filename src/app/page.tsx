@@ -255,65 +255,104 @@ export default function HomePage() {
         <div className={`${
           activeTab === 'map' ? 'flex flex-col' : 'hidden'
         } lg:flex lg:flex-col flex-1 relative`}>
+          
           {/* スマホ版検索エリア */}
-          <div className="lg:hidden bg-white border-b border-gray-200 overflow-hidden flex flex-col" style={{ height: '50vh' }}>
-            <div className="p-4 pb-2">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">検索</h3>
-              <div className="relative mb-2">
-                <input
-                  type="text"
-                  placeholder="店舗名・住所で検索"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base text-[#333333]"
+          <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">検索</h3>
+            <div className="relative mb-2">
+              <input
+                type="text"
+                placeholder="店舗名・住所で検索"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base text-[#333333]"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600 mb-2">
-                {filteredStores.length}件の店舗が見つかりました
-              </p>
+              </svg>
             </div>
-            {/* 検索結果の店舗リスト */}
-            <div className="flex-1 overflow-y-auto px-4 pb-2">
-              {filteredStores.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredStores.map((store) => (
-                    <div
-                      key={store.id}
-                      onClick={() => handleStoreClick(store)}
-                      className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition"
-                    >
-                      <h4 className="font-semibold text-gray-800 text-sm">{store.name}</h4>
-                      <p className="text-xs text-gray-600 mt-1">{store.address}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  該当する店舗が見つかりませんでした
-                </p>
-              )}
+            <p className="text-sm text-gray-600">
+              {filteredStores.length}件の店舗が見つかりました
+            </p>
+          </div>
+
+          {/* スマホ版フィルター */}
+          <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+            <h3 className="font-semibold text-gray-800 mb-3">フィルター</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.hasChair}
+                  onChange={() => handleFilterChange('hasChair')}
+                />
+                <span className="text-[#333333]">子ども椅子あり</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.hasTatamiRoom}
+                  onChange={() => handleFilterChange('hasTatamiRoom')}
+                />
+                <span className="text-[#333333]">座敷あり</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.hasParking}
+                  onChange={() => handleFilterChange('hasParking')}
+                />
+                <span className="text-[#333333]">駐車場あり</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.hasNursingRoom}
+                  onChange={() => handleFilterChange('hasNursingRoom')}
+                />
+                <span className="text-[#333333]">授乳室あり</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.hasDiaperChanging}
+                  onChange={() => handleFilterChange('hasDiaperChanging')}
+                />
+                <span className="text-[#333333]">おむつ替え台あり</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded"
+                  checked={filters.strollerAccessible}
+                  onChange={() => handleFilterChange('strollerAccessible')}
+                />
+                <span className="text-[#333333]">ベビーカー入店可</span>
+              </label>
             </div>
           </div>
 
           {/* 地図エリア */}
-          <div className={`flex-1 relative ${activeTab === 'map' ? 'lg:flex-1' : ''}`} style={{ height: activeTab === 'map' ? '50vh' : 'auto' }}>
+          <div className="flex-1 relative">
             <Map stores={filteredStores} selectedStore={selectedStore} />
             
-            {/* フィルターパネル */}
-            <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 max-w-xs">
+            {/* PC版フィルターパネル */}
+            <div className="hidden lg:block absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 max-w-xs">
               <h3 className="font-semibold text-gray-800 mb-3">フィルター</h3>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">

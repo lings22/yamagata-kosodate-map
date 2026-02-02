@@ -66,23 +66,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
           infoWindowRef.current.close()
         }
 
-        const chairs = []
-        if (store.has_chair_0_6m) {
-          const count = (store as any).chair_count_0_6m
-          chairs.push(count > 0 ? `0-6ヶ月: ${count}台` : '0-6ヶ月')
-        }
-        if (store.has_chair_6_18m) {
-          const count = (store as any).chair_count_6_18m
-          chairs.push(count > 0 ? `6-18ヶ月: ${count}台` : '6-18ヶ月')
-        }
-        if (store.has_chair_18m_3y) {
-          const count = (store as any).chair_count_18m_3y
-          chairs.push(count > 0 ? `18ヶ月-3歳: ${count}台` : '18ヶ月-3歳')
-        }
-        if (store.has_chair_3y_plus) {
-          const count = (store as any).chair_count_3y_plus
-          chairs.push(count > 0 ? `3歳以上: ${count}台` : '3歳以上')
-        }
+        const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
 
         const facilities = []
         if (store.has_nursing_room) facilities.push('🍼 授乳室')
@@ -90,8 +74,6 @@ export default function Map({ stores, selectedStore }: MapProps) {
         if (store.has_tatami_room) facilities.push('🍵 座敷')
         if (store.stroller_accessible) facilities.push('🚼 ベビーカーOK')
         if (store.has_parking) facilities.push('🅿️ 駐車場')
-
-        const allChairsHaveCount = chairs.every(chair => chair.includes('台'))
 
         const contentString = `
           <div style="padding: 12px; max-width: 280px; font-family: sans-serif;">
@@ -101,21 +83,12 @@ export default function Map({ stores, selectedStore }: MapProps) {
             <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
               ${store.address}
             </p>
-            ${chairs.length > 0 ? `
+            ${hasChair ? `
               <div style="margin-bottom: 12px;">
-                <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">子ども椅子</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                  ${chairs.map(c => `
-                    <span style="background: #e5e7eb; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #333333;">
-                      ${c}
-                    </span>
-                  `).join('')}
+                <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">子ども椅子: あり</div>
+                <div style="font-size: 11px; color: #6b7280; font-style: italic;">
+                  ※詳細は店舗にお問い合わせください
                 </div>
-                ${!allChairsHaveCount ? `
-                  <div style="font-size: 11px; color: #6b7280; font-style: italic; margin-top: 6px;">
-                    ※台数は未確認です
-                  </div>
-                ` : ''}
               </div>
             ` : ''}
             ${facilities.length > 0 ? `

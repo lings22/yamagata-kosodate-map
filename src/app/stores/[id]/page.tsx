@@ -69,23 +69,7 @@ export default function StoreDetailPage() {
 
   const displayLikesCount = likesCount || store.likes_count
 
-  const chairs = []
-  if (store.has_chair_0_6m) {
-    const count = (store as any).chair_count_0_6m
-    chairs.push(count > 0 ? `0-6ヶ月: ${count}台` : '0-6ヶ月')
-  }
-  if (store.has_chair_6_18m) {
-    const count = (store as any).chair_count_6_18m
-    chairs.push(count > 0 ? `6-18ヶ月: ${count}台` : '6-18ヶ月')
-  }
-  if (store.has_chair_18m_3y) {
-    const count = (store as any).chair_count_18m_3y
-    chairs.push(count > 0 ? `18ヶ月-3歳: ${count}台` : '18ヶ月-3歳')
-  }
-  if (store.has_chair_3y_plus) {
-    const count = (store as any).chair_count_3y_plus
-    chairs.push(count > 0 ? `3歳以上: ${count}台` : '3歳以上')
-  }
+  const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -207,23 +191,13 @@ export default function StoreDetailPage() {
             )}
 
             {/* 子ども椅子 */}
-            {chairs.length > 0 && (
+            {hasChair && (
               <div className="border-l-4 border-green-400 pl-4">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2">
                   <span className="text-2xl">🪑</span>
-                  <h3 className="text-lg font-semibold text-gray-800">子ども椅子</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">子ども椅子: あり</h3>
                 </div>
-                <div className="flex flex-wrap gap-2 ml-8">
-                  {chairs.map((chair) => (
-                    <span
-                      key={chair}
-                      className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
-                    >
-                      {chair}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-500 italic ml-8 mt-2">
+                <p className="text-sm text-gray-500 italic ml-10 mt-2">
                   ※台数は未確認です。情報お待ちしております
                 </p>
               </div>
