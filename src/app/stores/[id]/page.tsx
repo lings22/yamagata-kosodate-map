@@ -12,7 +12,7 @@ import Footer from '@/components/Footer'
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const storeId = params.id as string
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
@@ -129,14 +129,25 @@ export default function StoreDetailPage() {
                 <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
                 <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
               </button>
-              {user && store.posted_by === user.id && (
-                <Link
-                  href={`/stores/${store.id}/edit`}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
-                >
-                  <span className="hidden sm:inline">✏️ 編集</span>
-                  <span className="sm:hidden">✏️</span>
-                </Link>
+              {user && (isAdmin || store.posted_by === user.id) && (
+                <>
+                  <Link
+                    href={`/stores/${store.id}/edit`}
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
+                  >
+                    <span className="hidden sm:inline">✏️ 編集</span>
+                    <span className="sm:hidden">✏️</span>
+                  </Link>
+                  {isAdmin && (
+                    <button
+                      onClick={handleDelete}
+                      className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
+                    >
+                      <span className="hidden sm:inline">🗑️ 削除</span>
+                      <span className="sm:hidden">🗑️</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

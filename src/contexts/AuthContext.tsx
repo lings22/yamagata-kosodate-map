@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase'
 type AuthContextType = {
   user: User | null
   loading: boolean
+  isAdmin: boolean
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
@@ -18,19 +19,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
+
+  const checkAdmin = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single()
+    
+    setIsAdmin(data?.is_admin ?? false)
+  }
 
   useEffect(() => {
     // 現在のユーザーを取得
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       setUser(user)
+      if (user) {
+        await checkAdmin(user.id)
+      }
       setLoading(false)
     })
 
     // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null)
+        if (session?.user) {
+          await checkAdmin(session.user.id)
+        } else {
+          setIsAdmin(false)
+        }
         setLoading(false)
       }
     )
@@ -74,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}
+      value={{ user, loading, isAdmin, signUp, signIn, signInWithGoogle, signOut }}
     >
       {children}
     </AuthContext.Provider>

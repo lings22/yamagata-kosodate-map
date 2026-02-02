@@ -1,68 +1,63 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useStores, Store } from '@/hooks/useStores'
-import StoreList from '@/components/StoreList'
+import { createClient } from '@/lib/supabase'
+import { Store } from '@/hooks/useStores'
+import { useLikes } from '@/hooks/useLikes'
 import Footer from '@/components/Footer'
 
-export default function StoresPage() {
-  const { stores, loading } = useStores()
-  const { user } = useAuth()
-  const [searchQuery, setSearchQuery] = useState('')
+export default function StoreDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { user, isAdmin } = useAuth()
+  const storeId = params.id as string
+  const [store, setStore] = useState<Store | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { isLiked, likesCount, toggleLike } = useLikes(storeId)
 
-  const [filters, setFilters] = useState({
-    hasChair: false,
-    hasParking: false,
-    hasNursingRoom: false,
-    hasDiaperChanging: false,
-    strollerAccessible: false,
-  })
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('id', storeId)
+          .single()
 
-  const filteredStores = useMemo(() => {
-    let result = stores
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(store => 
-        store.name.toLowerCase().includes(query) ||
-        store.address.toLowerCase().includes(query) ||
-        (store.comment && store.comment.toLowerCase().includes(query))
-      )
+        if (error) throw error
+        setStore(data)
+      } catch (err) {
+        console.error('店舗取得エラー:', err)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const hasActiveFilters = filters.hasChair || filters.hasParking || 
-      filters.hasNursingRoom || filters.hasDiaperChanging || filters.strollerAccessible
+    fetchStore()
+  }, [storeId])
 
-    if (hasActiveFilters) {
-      result = result.filter(store => {
-        if (filters.hasChair) {
-          if (!store.has_chair_0_6m && !store.has_chair_6_18m && 
-              !store.has_chair_18m_3y && !store.has_chair_3y_plus) {
-            return false
-          }
-        }
-        if (filters.hasParking && !store.has_parking) return false
-        if (filters.hasNursingRoom && !store.has_nursing_room) return false
-        if (filters.hasDiaperChanging && !store.has_diaper_changing) return false
-        if (filters.strollerAccessible && !store.stroller_accessible) return false
-        return true
-      })
+  const handleDelete = async () => {
+    if (!confirm('本当にこの店舗を削除しますか？')) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('stores')
+        .delete()
+        .eq('id', storeId)
+
+      if (error) throw error
+
+      alert('店舗を削除しました')
+      router.push('/')
+    } catch (error) {
+      console.error('削除エラー:', error)
+      alert('削除に失敗しました')
     }
-
-    return result
-  }, [stores, filters, searchQuery])
-
-  const handleFilterChange = (filterName: keyof typeof filters) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterName]: !prev[filterName]
-    }))
-  }
-
-  const handleStoreClick = (store: Store) => {
-    window.location.href = `/stores/${store.id}`
   }
 
   if (loading) {
@@ -75,6 +70,25 @@ export default function StoresPage() {
       </div>
     )
   }
+
+  if (!store) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
+        <div className="text-center">
+          <p className="text-xl text-gray-600 mb-4">店舗が見つかりませんでした</p>
+          <Link
+            href="/stores"
+            className="px-6 py-3 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition"
+          >
+            一覧に戻る
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const displayLikesCount = likesCount || store.likes_count
+  const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -91,7 +105,7 @@ export default function StoresPage() {
               </span>
             </Link>
             
-<div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user && (
                 <Link
                   href="/add-store"
@@ -101,6 +115,12 @@ export default function StoresPage() {
                   <span className="sm:hidden">➕</span>
                 </Link>
               )}
+              <Link
+                href="/stores"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+              >
+                📋 一覧に戻る
+              </Link>
               <Link
                 href="/"
                 className="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
@@ -113,142 +133,164 @@ export default function StoresPage() {
       </header>
 
       {/* メインコンテンツ */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">店舗一覧</h2>
-          <p className="text-gray-600">全{filteredStores.length}件の店舗</p>
-        </div>
-
-        {/* 検索とフィルター */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          {/* 検索窓 */}
-          <div className="relative mb-6">
-            <input
-              type="text"
-              placeholder="店舗名・住所で検索"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-[#333333]"
-            />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 店舗名といいねボタン */}
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+              {store.name}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={toggleLike}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-pink-100 hover:bg-pink-200 transition"
+              >
+                <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
+                <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
+              </button>
+              {user && (isAdmin || store.posted_by === user.id) && (
+                <>
+                  <Link
+                    href={`/stores/${store.id}/edit`}
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
+                  >
+                    <span className="hidden sm:inline">✏️ 編集</span>
+                    <span className="sm:hidden">✏️</span>
+                  </Link>
+                  {isAdmin && (
+                    <button
+                      onClick={handleDelete}
+                      className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
+                    >
+                      <span className="hidden sm:inline">🗑️ 削除</span>
+                      <span className="sm:hidden">🗑️</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
-          {/* フィルター */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-3">フィルター</h3>
-            <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.hasChair}
-                  onChange={() => handleFilterChange('hasChair')}
-                />
-                <span className="text-[#333333]">子ども椅子あり</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.hasParking}
-                  onChange={() => handleFilterChange('hasParking')}
-                />
-                <span className="text-[#333333]">駐車場あり</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.hasNursingRoom}
-                  onChange={() => handleFilterChange('hasNursingRoom')}
-                />
-                <span className="text-[#333333]">授乳室あり</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.hasDiaperChanging}
-                  onChange={() => handleFilterChange('hasDiaperChanging')}
-                />
-                <span className="text-[#333333]">おむつ替え台あり</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition">
-                <input 
-                  type="checkbox" 
-                  className="rounded"
-                  checked={filters.strollerAccessible}
-                  onChange={() => handleFilterChange('strollerAccessible')}
-                />
-                <span className="text-[#333333]">ベビーカー入店可</span>
-              </label>
+          <div className="space-y-3 text-gray-700">
+            <div className="flex items-start gap-2">
+              <span className="text-xl">📍</span>
+              <span className="flex-1">{store.address}</span>
             </div>
           </div>
         </div>
 
-        {/* 店舗一覧 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStores.map((store) => (
-            <div
-              key={store.id}
-              onClick={() => handleStoreClick(store)}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition cursor-pointer"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-bold text-xl text-gray-800 flex-1">
-                  {store.name}
-                </h3>
-                <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-pink-100">
-                  <span className="text-lg">❤️</span>
-                  <span className="text-sm font-semibold text-pink-800">{store.likes_count}</span>
+        {/* 設備情報 */}
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">設備情報</h2>
+          
+          <div className="space-y-6">
+            {/* 授乳室 */}
+            {store.has_nursing_room && (
+              <div className="border-l-4 border-pink-400 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">🍼</span>
+                  <h3 className="text-lg font-semibold text-gray-800">授乳室</h3>
+                </div>
+                {store.nursing_room_detail && (
+                  <p className="text-gray-600 ml-8">{store.nursing_room_detail}</p>
+                )}
+              </div>
+            )}
+
+            {/* 座敷 */}
+            {store.has_tatami_room && (
+              <div className="border-l-4 border-amber-400 pl-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🍵</span>
+                  <h3 className="text-lg font-semibold text-gray-800">座敷あり</h3>
                 </div>
               </div>
-              
-              <p className="text-sm text-gray-600 mb-4">
-                📍 {store.address}
-              </p>
+            )}
 
-              <div className="flex flex-wrap gap-2">
-                {store.has_nursing_room && (
-                  <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded-full">
-                    🍼 授乳室
-                  </span>
-                )}
-                {store.has_diaper_changing && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    👶 おむつ替え
-                  </span>
-                )}
-                {(store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus) && (
-                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                    🪑 子ども椅子
-                  </span>
-                )}
-                {store.stroller_accessible && (
-                  <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                    🚼 ベビーカーOK
-                  </span>
-                )}
-                {store.has_parking && (
-                  <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                    🅿️ 駐車場
-                  </span>
+            {/* おむつ替え台 */}
+            {store.has_diaper_changing && (
+              <div className="border-l-4 border-blue-400 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">👶</span>
+                  <h3 className="text-lg font-semibold text-gray-800">おむつ替え台</h3>
+                </div>
+                {store.diaper_changing_detail && (
+                  <p className="text-gray-600 ml-8">{store.diaper_changing_detail}</p>
                 )}
               </div>
-            </div>
-          ))}
+            )}
+
+            {/* 子ども椅子 */}
+            {hasChair && (
+              <div className="border-l-4 border-green-400 pl-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🪑</span>
+                  <h3 className="text-lg font-semibold text-gray-800">子ども椅子: あり</h3>
+                </div>
+                <p className="text-sm text-gray-500 italic ml-10 mt-2">
+                  ※台数は未確認です。情報お待ちしております
+                </p>
+              </div>
+            )}
+
+            {/* ベビーカー */}
+            {store.stroller_accessible && (
+              <div className="border-l-4 border-purple-400 pl-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🚼</span>
+                  <h3 className="text-lg font-semibold text-gray-800">ベビーカー入店可</h3>
+                </div>
+              </div>
+            )}
+
+            {/* 駐車場 */}
+            {store.has_parking && (
+              <div className="border-l-4 border-orange-400 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">🅿️</span>
+                  <h3 className="text-lg font-semibold text-gray-800">駐車場</h3>
+                </div>
+                {store.parking_detail && (
+                  <p className="text-gray-600 ml-8">{store.parking_detail}</p>
+                )}
+              </div>
+            )}
+
+            {/* 個室 */}
+            {store.has_private_room && (
+              <div className="border-l-4 border-indigo-400 pl-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">🚪</span>
+                  <h3 className="text-lg font-semibold text-gray-800">個室あり</h3>
+                </div>
+                {store.private_room_detail && (
+                  <p className="text-gray-600 ml-8">{store.private_room_detail}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* コメント */}
+        {store.comment && (
+          <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">コメント</h2>
+            <p className="text-gray-700 leading-relaxed">{store.comment}</p>
+          </div>
+        )}
+
+        {/* 地図 */}
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">アクセス</h2>
+          <div className="w-full h-64 sm:h-96 rounded-lg overflow-hidden">
+            <iframe
+              src={`https://maps.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
       <Footer />

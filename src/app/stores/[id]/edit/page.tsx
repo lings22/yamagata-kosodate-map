@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 
 export default function EditStorePage() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const router = useRouter()
   const params = useParams()
   const storeId = params.id as string
@@ -62,7 +62,7 @@ export default function EditStorePage() {
           return
         }
 
-        if (data.posted_by !== user.id) {
+        if (!isAdmin && data.posted_by !== user.id) {
           alert('この店舗を編集する権限がありません')
           router.push(`/stores/${storeId}`)
           return
