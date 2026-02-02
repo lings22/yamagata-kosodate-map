@@ -255,36 +255,6 @@ export default function HomePage() {
         <div className={`${
           activeTab === 'map' ? 'flex flex-col' : 'hidden'
         } lg:flex lg:flex-col flex-1 relative`}>
-          
-          {/* スマホ版検索エリア */}
-          <div className="lg:hidden bg-white border-b border-gray-200 p-4">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">検索</h3>
-            <div className="relative mb-2">
-              <input
-                type="text"
-                placeholder="店舗名・住所で検索"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base text-[#333333]"
-              />
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-600">
-              {filteredStores.length}件の店舗が見つかりました
-            </p>
-          </div>
 
           {/* スマホ版フィルター */}
           <div className="lg:hidden bg-white border-b border-gray-200 p-4">
