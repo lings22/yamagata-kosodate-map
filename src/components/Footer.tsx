@@ -100,7 +100,9 @@ export default function Footer() {
               
                 href="mailto:info@partido.co.jp"
                 className="block py-3 text-gray-700 hover:text-orange-500 transition border-b border-gray-200"
+              >
                 ✉️ お問い合わせ
+              </a>
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-600 mb-2">
