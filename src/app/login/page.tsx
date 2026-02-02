@@ -1,21 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
 type Tab = 'login' | 'register'
 
-export default function LoginPage() {
+// useSearchParamsを使うコンポーネントを分離
+function LoginForm() {
   const [activeTab, setActiveTab] = useState<Tab>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)  // 追加
+  const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlMessage = searchParams.get('message')
   const { signIn, signUp } = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,7 +31,6 @@ export default function LoginPage() {
       await signIn(email, password)
       router.push('/')
     } catch (err: any) {
-      // メール未確認の場合のエラーメッセージを分かりやすく
       if (err.message?.includes('Email not confirmed')) {
         setError('メールアドレスが確認されていません。確認メール内のリンクをクリックしてください。')
       } else {
@@ -58,7 +60,6 @@ export default function LoginPage() {
 
     try {
       await signUp(email, password)
-      // リダイレクトせずにメッセージを表示
       setMessage('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。')
       setEmail('')
       setPassword('')
@@ -70,7 +71,6 @@ export default function LoginPage() {
     }
   }
 
-  // タブ切り替え時にメッセージとエラーをクリア
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
     setError(null)
@@ -91,6 +91,13 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* URLからのメッセージ表示 */}
+          {urlMessage && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-6">
+              ✅ {urlMessage}
+            </div>
+          )}
+
           {/* タブ */}
           <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
             <button
@@ -263,5 +270,18 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// メインのエクスポート（Suspenseでラップ）
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
