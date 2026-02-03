@@ -69,6 +69,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
         }
 
         const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
+        const hasChairCount = (store.chair_count_0_6m ?? 0) > 0 || (store.chair_count_6_18m ?? 0) > 0 || (store.chair_count_18m_3y ?? 0) > 0 || (store.chair_count_3y_plus ?? 0) > 0
 
         const facilities = []
         if (store.has_nursing_room) facilities.push('🍼 授乳室')
@@ -90,10 +91,19 @@ export default function Map({ stores, selectedStore }: MapProps) {
             </p>
             ${hasChair ? `
               <div style="margin-bottom: 12px;">
-                <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">子ども椅子: あり</div>
-                <div style="font-size: 11px; color: #6b7280; font-style: italic;">
-                  ※台数は未確認です。情報お待ちしております
-                </div>
+                <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">🪑 子ども椅子: あり</div>
+                ${hasChairCount ? `
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                    <span style="background: #dcfce7; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #166534;">0〜6ヶ月: ${store.chair_count_0_6m ?? 0}台</span>
+                    <span style="background: #dcfce7; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #166534;">6〜18ヶ月: ${store.chair_count_6_18m ?? 0}台</span>
+                    <span style="background: #dcfce7; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #166534;">18ヶ月〜3歳: ${store.chair_count_18m_3y ?? 0}台</span>
+                    <span style="background: #dcfce7; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #166534;">3歳以上: ${store.chair_count_3y_plus ?? 0}台</span>
+                  </div>
+                ` : `
+                  <div style="font-size: 11px; color: #6b7280; font-style: italic; margin-top: 4px;">
+                    ※台数は未確認です。情報お待ちしております
+                  </div>
+                `}
               </div>
             ` : ''}
             ${facilities.length > 0 ? `

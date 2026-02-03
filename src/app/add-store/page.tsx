@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase'
 
 export default function AddStorePage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const autocompleteInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -39,6 +39,8 @@ export default function AddStorePage() {
   })
 
   useEffect(() => {
+    if (authLoading) return
+
     if (!user) {
       router.push('/login')
       return
@@ -57,7 +59,7 @@ export default function AddStorePage() {
     } else {
       initAutocomplete()
     }
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const initAutocomplete = () => {
     if (!autocompleteInputRef.current || !window.google) return
@@ -130,7 +132,7 @@ export default function AddStorePage() {
   const checkDuplicate = async (lat: number, lng: number) => {
     try {
       const supabase = createClient()
-      
+
       const { data, error } = await supabase
         .from('stores')
         .select('*')
@@ -225,8 +227,7 @@ export default function AddStorePage() {
 
       if (error) throw error
 
-      alert('店舗を追加しました！')
-      router.push('/')
+      router.push('/?added=true')
     } catch (error) {
       console.error('保存エラー:', error)
       throw error
@@ -241,6 +242,18 @@ export default function AddStorePage() {
     await saveStore(formData.latitude, formData.longitude)
   }
 
+  // 認証チェック中はローディング表示
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!user) {
     return null
   }
@@ -253,7 +266,7 @@ export default function AddStorePage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
             </Link>
           </div>

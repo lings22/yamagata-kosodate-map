@@ -16,7 +16,7 @@ export default function StoreDetailPage() {
   const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   // Supabaseクライアントを一度だけ作成
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
@@ -58,7 +58,6 @@ export default function StoreDetailPage() {
     }
   }, [storeId, supabase])
 
-  // useLikesは店舗データ取得後に呼ぶ（storeIdが確定してから）
   const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
 
   const handleDelete = async () => {
@@ -81,8 +80,6 @@ export default function StoreDetailPage() {
     }
   }
 
-  // 店舗データの読み込み中のみローディング表示
-  // 認証の読み込みは待たない
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
@@ -112,6 +109,7 @@ export default function StoreDetailPage() {
 
   const displayLikesCount = likesCount || store.likes_count
   const hasChair = store.has_chair_0_6m || store.has_chair_6_18m || store.has_chair_18m_3y || store.has_chair_3y_plus
+  const hasChairCount = (store.chair_count_0_6m ?? 0) > 0 || (store.chair_count_6_18m ?? 0) > 0 || (store.chair_count_18m_3y ?? 0) > 0 || (store.chair_count_3y_plus ?? 0) > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
@@ -129,7 +127,6 @@ export default function StoreDetailPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* 認証読み込み中はボタンを表示しない、読み込み完了後に表示 */}
               {!authLoading && user && (
                 <Link
                   href="/add-store"
@@ -172,7 +169,6 @@ export default function StoreDetailPage() {
                 <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
                 <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
               </button>
-              {/* 認証読み込み完了後に編集・削除ボタンを表示 */}
               {!authLoading && user && (isAdmin || store.posted_by === user.id) && (
                 <>
                   <Link
@@ -248,13 +244,30 @@ export default function StoreDetailPage() {
             {/* 子ども椅子 */}
             {hasChair && (
               <div className="border-l-4 border-green-400 pl-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">🪑</span>
                   <h3 className="text-lg font-semibold text-gray-800">子ども椅子: あり</h3>
                 </div>
-                <p className="text-sm text-gray-500 italic ml-10 mt-2">
-                  ※台数は未確認です。情報お待ちしております
-                </p>
+                {hasChairCount ? (
+                  <div className="flex flex-wrap gap-2 ml-8">
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                      0〜6ヶ月: {store.chair_count_0_6m ?? 0}台
+                    </span>
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                      6〜18ヶ月: {store.chair_count_6_18m ?? 0}台
+                    </span>
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                      18ヶ月〜3歳: {store.chair_count_18m_3y ?? 0}台
+                    </span>
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                      3歳以上: {store.chair_count_3y_plus ?? 0}台
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic ml-8">
+                    ※台数は未確認です。情報お待ちしております
+                  </p>
+                )}
               </div>
             )}
 
