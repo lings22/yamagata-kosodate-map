@@ -115,9 +115,6 @@ export default function HomePage() {
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 山形てくてくマップ
               </h1>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                β版
-              </span>
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
