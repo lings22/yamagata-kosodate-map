@@ -88,8 +88,13 @@ export default function Map({ stores, selectedStore }: MapProps) {
               ${store.name}
             </h3>
             <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
-              ${store.address}
-            </p>
+  ${store.address}
+</p>
+${store.business_hours ? `
+  <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
+    🕐 ${store.business_hours}
+  </p>
+` : ''}
             ${hasChair ? `
               <div style="margin-bottom: 12px;">
                 <div style="font-size: 14px; font-weight: 600; color: #333333; margin-bottom: 6px;">🪑 子ども椅子: あり</div>

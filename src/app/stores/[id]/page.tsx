@@ -121,9 +121,6 @@ export default function StoreDetailPage() {
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 山形てくてくマップ
               </h1>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                β版
-              </span>
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
@@ -197,6 +194,12 @@ export default function StoreDetailPage() {
               <span className="text-xl">📍</span>
               <span className="flex-1">{store.address}</span>
             </div>
+            {store.business_hours && (
+              <div className="flex items-start gap-2">
+                <span className="text-xl">🕐</span>
+                <span className="flex-1 whitespace-pre-wrap">{store.business_hours}</span>
+              </div>
+            )}
           </div>
         </div>
 

@@ -9,6 +9,7 @@ export type Store = {
   address: string
   latitude: number
   longitude: number
+  business_hours?: string
   has_nursing_room: boolean
   nursing_room_detail: string | null
   has_diaper_changing: boolean
