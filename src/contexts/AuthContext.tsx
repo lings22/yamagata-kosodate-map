@@ -26,13 +26,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = supabaseRef.current
 
   const checkAdmin = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single()
-    
-    setIsAdmin(data?.is_admin ?? false)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .maybeSingle()
+      
+      if (error) {
+        console.error('プロフィール取得エラー:', error)
+        setIsAdmin(false)
+        return
+      }
+      
+      setIsAdmin(data?.is_admin ?? false)
+    } catch (err) {
+      console.error('checkAdmin エラー:', err)
+      setIsAdmin(false)
+    }
   }
 
   useEffect(() => {
