@@ -32,6 +32,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        gestureHandling: 'greedy',
       })
 
       console.log('地図を初期化しました')
