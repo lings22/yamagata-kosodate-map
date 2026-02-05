@@ -20,15 +20,15 @@ export default function Footer() {
             <Link href="/about" className="text-sm text-gray-600 hover:text-orange-500 transition">
               山形てくてくマップとは
             </Link>
+            <a href="https://forms.gle/B2AHSYHfZsUz8qUX7" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-orange-500 transition">
+              📩 情報提供・お問い合わせ
+            </a>
             <Link href="/terms" className="text-sm text-gray-600 hover:text-orange-500 transition">
               利用規約
             </Link>
             <Link href="/privacy" className="text-sm text-gray-600 hover:text-orange-500 transition">
               プライバシーポリシー
             </Link>
-            <a href="mailto:info@partido.co.jp" className="text-sm text-gray-600 hover:text-orange-500 transition">
-              お問い合わせ
-            </a>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-2">
@@ -65,15 +65,15 @@ export default function Footer() {
               <Link href="/about" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 山形てくてくマップとは
               </Link>
+              <a href="https://forms.gle/B2AHSYHfZsUz8qUX7" target="_blank" rel="noopener noreferrer" className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
+                📩 情報提供・お問い合わせ
+              </a>
               <Link href="/terms" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 利用規約
               </Link>
               <Link href="/privacy" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 プライバシーポリシー
               </Link>
-              <a href="mailto:info@partido.co.jp" className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
-                お問い合わせ
-              </a>
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-600 mb-2">
