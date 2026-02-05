@@ -9,7 +9,7 @@ export default function TermsPage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
               <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                 β版
@@ -30,7 +30,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-2xl font-bold text-gray-800 mb-4">第1条（適用）</h2>
               <p>
-                本規約は、株式会社パルティード（以下「当社」といいます）が提供する山形子育てマップ（以下「本サービス」といいます）の
+                本規約は、株式会社パルティード（以下「当社」といいます）が提供する山形てくてくマップ（以下「本サービス」といいます）の
                 利用に関する条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。
               </p>
             </section>

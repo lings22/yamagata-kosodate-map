@@ -17,6 +17,9 @@ export default function Footer() {
             <Link href="/stores" className="text-sm text-gray-600 hover:text-orange-500 transition">
               店舗一覧
             </Link>
+            <Link href="/about" className="text-sm text-gray-600 hover:text-orange-500 transition">
+              山形てくてくマップとは
+            </Link>
             <Link href="/terms" className="text-sm text-gray-600 hover:text-orange-500 transition">
               利用規約
             </Link>
@@ -58,6 +61,9 @@ export default function Footer() {
               </Link>
               <Link href="/stores" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 店舗一覧
+              </Link>
+              <Link href="/about" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
+                山形てくてくマップとは
               </Link>
               <Link href="/terms" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 利用規約

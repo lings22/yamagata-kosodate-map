@@ -180,7 +180,7 @@ export default function EditStorePage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
             </Link>
           </div>

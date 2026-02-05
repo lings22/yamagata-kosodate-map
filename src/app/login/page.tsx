@@ -82,11 +82,11 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            山形子育てマップ
+            山形てくてくマップ
           </h1>
           <p className="text-gray-600">
             授乳室・おむつ替え台・子ども椅子のある<br />
-            お店を簡単に検索
+            お店や施設を簡単に検索
           </p>
         </div>
 
