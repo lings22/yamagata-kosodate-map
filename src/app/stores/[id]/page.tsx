@@ -16,6 +16,10 @@ export default function StoreDetailPage() {
   const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState<any[]>([])
+  const [nickname, setNickname] = useState('')
+  const [reviewContent, setReviewContent] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   // Supabaseクライアントを一度だけ作成
   const supabaseRef = useRef(createClient())
@@ -58,6 +62,23 @@ export default function StoreDetailPage() {
     }
   }, [storeId, supabase])
 
+  // 口コミを取得
+  useEffect(() => {
+    if (!storeId) return
+
+    const fetchReviews = async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('store_id', storeId)
+        .order('created_at', { ascending: false })
+
+      if (data) setReviews(data)
+    }
+
+    fetchReviews()
+  }, [storeId, supabase])
+
   const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
 
   const handleDelete = async () => {
@@ -77,6 +98,39 @@ export default function StoreDetailPage() {
     } catch (error) {
       console.error('削除エラー:', error)
       alert('削除に失敗しました')
+    }
+  }
+
+  const handleReviewSubmit = async () => {
+    if (!nickname.trim() || !reviewContent.trim()) {
+      alert('ニックネームと口コミ内容を入力してください')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({
+          store_id: storeId,
+          nickname: nickname.trim(),
+          content: reviewContent.trim(),
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setReviews([data, ...reviews])
+      setNickname('')
+      setReviewContent('')
+      alert('口コミを投稿しました！')
+    } catch (error) {
+      console.error('投稿エラー:', error)
+      alert('投稿に失敗しました')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -330,6 +384,86 @@ export default function StoreDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* 口コミ */}
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mt-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">💬 口コミ</h2>
+
+          {/* 投稿フォーム */}
+          <div className="bg-gray-50 rounded-lg p-4 sm:p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">口コミを投稿する</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ニックネーム
+                </label>
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="例：やまがたママ"
+                  maxLength={20}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  口コミ内容
+                </label>
+                <textarea
+                  value={reviewContent}
+                  onChange={(e) => setReviewContent(e.target.value)}
+                  placeholder="お店の雰囲気や子連れでの利用しやすさなど、自由にお書きください"
+                  rows={4}
+                  maxLength={500}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-gray-800 resize-none"
+                />
+                <p className="text-xs text-gray-500 mt-1 text-right">{reviewContent.length}/500</p>
+              </div>
+              <button
+                onClick={handleReviewSubmit}
+                disabled={submitting}
+                className="px-6 py-3 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? '投稿中...' : '口コミを投稿する'}
+              </button>
+            </div>
+          </div>
+
+          {/* 口コミ一覧 */}
+          {reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-gray-800">🙂 {review.nickname}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(review.created_at).toLocaleDateString('ja-JP')}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                  {!authLoading && isAdmin && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm('この口コミを削除しますか？')) return
+                        await supabase.from('reviews').delete().eq('id', review.id)
+                        setReviews(reviews.filter(r => r.id !== review.id))
+                      }}
+                      className="text-xs text-red-500 hover:underline mt-2"
+                    >
+                      削除
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              まだ口コミがありません。最初の口コミを投稿してみましょう！
+            </p>
+          )}
+        </div>
+
       </div>
       
       <Footer />
