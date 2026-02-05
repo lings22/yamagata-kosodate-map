@@ -331,6 +331,7 @@ export default function StoreDetailPage() {
           </div>
         </div>
       </div>
+      
       <Footer />
     </div>
   )
