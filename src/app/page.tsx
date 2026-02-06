@@ -243,7 +243,7 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex-1 overflow-y-auto scrollbar-visible" style={{ height: 'calc(100vh - 200px)' }}>
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
           </div>
         </div>
