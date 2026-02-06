@@ -9,17 +9,12 @@ import StoreList from '@/components/StoreList'
 import Footer from '@/components/Footer'
 
 export default function StoresPage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { stores, loading: storesLoading } = useStores()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
-
-  const handleLogout = async () => {
-    await signOut()
-    router.refresh()
-  }
 
   const [filters, setFilters] = useState({
     hasChair: false,
@@ -93,7 +88,7 @@ export default function StoresPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200 z-10">
+      <header className="bg-white shadow-sm border-b border-gray-200 relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
@@ -103,7 +98,7 @@ export default function StoresPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {user && (
+              {user ? (
                 <Link
                   href="/add-store"
                   className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
@@ -111,14 +106,6 @@ export default function StoresPage() {
                   <span className="hidden sm:inline">➕ 店舗を追加</span>
                   <span className="sm:hidden">➕</span>
                 </Link>
-              )}
-              {user ? (
-                <button
-                  onClick={handleLogout}
-                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
-                >
-                  ログアウト
-                </button>
               ) : (
                 <Link
                   href="/login"
