@@ -2,8 +2,11 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import SimpleBar from 'simplebar-react'
+import 'simplebar-react/dist/simplebar.min.css'
 import StoreList from '@/components/StoreList'
 import { useStores, Store } from '@/hooks/useStores'
 import Footer from '@/components/Footer'
@@ -21,12 +24,18 @@ const Map = dynamic(() => import('@/components/Map'), {
 })
 
 export default function HomePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, signOut } = useAuth()
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { stores } = useStores()
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const handleLogout = async () => {
+    await signOut()
+    router.refresh()
+  }
 
   const [filters, setFilters] = useState({
     hasChair: false,
@@ -101,7 +110,7 @@ export default function HomePage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200 relative z-50">
+      <header className="bg-white shadow-sm border-b border-gray-200 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
@@ -112,13 +121,21 @@ export default function HomePage() {
             
             <div className="flex items-center gap-2 sm:gap-3">
               {user ? (
-                <Link
-                  href="/add-store"
-                  className="px-3 sm:px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition text-xs sm:text-sm font-medium"
-                >
-                  <span className="hidden sm:inline">➕ 店舗を追加</span>
-                  <span className="sm:hidden">➕ 追加</span>
-                </Link>
+                <>
+                  <Link
+                    href="/add-store"
+                    className="px-3 sm:px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition text-xs sm:text-sm font-medium"
+                  >
+                    <span className="hidden sm:inline">➕ 店舗を追加</span>
+                    <span className="sm:hidden">➕ 追加</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    ログアウト
+                  </button>
+                </>
               ) : (
                 <Link
                   href="/login"
@@ -190,7 +207,7 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-visible">
+          <div className="flex-1 overflow-y-auto">
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
           </div>
         </div>
@@ -228,9 +245,9 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-visible" style={{ height: 'calc(100vh - 200px)' }}>
+          <SimpleBar style={{ height: 'calc(100vh - 200px)' }}>
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
-          </div>
+          </SimpleBar>
         </div>
 
         {/* PC: 右側地図 / スマホ: タブで切り替え */}
