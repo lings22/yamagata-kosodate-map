@@ -83,7 +83,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
         const buttonId = `detail-btn-${store.id}`
 
         const contentString = `
-          <div style="padding: 12px; max-width: 280px; font-family: sans-serif;">
+          <div class="scrollbar-visible" style="padding: 12px; max-width: 280px; max-height: 50vh; overflow-y: auto; font-family: sans-serif;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #333333;">
               ${store.name}
             </h3>

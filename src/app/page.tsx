@@ -205,7 +205,7 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-visible">
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
           </div>
         </div>

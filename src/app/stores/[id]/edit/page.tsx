@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 
 export default function EditStorePage() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const storeId = params.id as string
@@ -41,6 +41,8 @@ export default function EditStorePage() {
   })
 
   useEffect(() => {
+    if (authLoading) return    // ← この1行を追加
+
     if (!user) {
       router.push('/login')
       return
@@ -103,7 +105,7 @@ export default function EditStorePage() {
     }
 
     fetchStore()
-  }, [user, router, storeId])
+  }, [authLoading, user, router, storeId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
