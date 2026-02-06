@@ -57,6 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await checkAdmin(user.id)
       }
       setLoading(false)
+    }).catch((err) => {
+      console.error('セッション取得エラー:', err)
+      if (isMounted) {
+        setUser(null)
+        setIsAdmin(false)
+        setLoading(false)
+      }
     })
 
     // 認証状態の変更を監視

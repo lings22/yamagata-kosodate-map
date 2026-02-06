@@ -11,9 +11,6 @@ export default function PrivacyPage() {
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                 山形子育てマップ
               </h1>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                β版
-              </span>
             </Link>
           </div>
         </div>
