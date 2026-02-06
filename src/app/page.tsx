@@ -95,7 +95,7 @@ export default function HomePage() {
     setActiveTab('map')
   }
 
-  if (!mounted || loading || storesLoading) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -205,9 +205,14 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto">
-            <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
-          </div>
+          {storesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+                <p className="ml-3 text-gray-600">店舗を読み込み中...</p>
+              </div>
+            ) : (
+              <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
+            )}
         </div>
 
         {/* スマホ: タブで切り替え（一覧表示） */}
@@ -243,9 +248,14 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
-            <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
-          </div>
+          {storesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+                <p className="ml-3 text-gray-600">店舗を読み込み中...</p>
+              </div>
+            ) : (
+              <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
+            )}
         </div>
 
         {/* PC: 右側地図 / スマホ: タブで切り替え */}

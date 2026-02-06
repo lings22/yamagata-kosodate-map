@@ -75,7 +75,7 @@ export default function StoresPage() {
     router.push(`/stores/${store.id}`)
   }
 
-  if (!mounted || loading || storesLoading) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -212,7 +212,14 @@ export default function StoresPage() {
 
         {/* 店舗一覧 */}
         <div className="bg-white rounded-lg shadow-sm">
-          <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
+          {storesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+              <p className="ml-3 text-gray-600">店舗を読み込み中...</p>
+            </div>
+          ) : (
+            <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
+          )}
         </div>
       </div>
       
