@@ -27,9 +27,27 @@ body {
 
 /* =============================================
    モバイル スクロールバー常時表示
-   対象: .scrollbar-visible クラスを付与した要素
    ============================================= */
 
+/* --- ページ全体のスクロール（/stores, /about, /terms 等） --- */
+@media (max-width: 768px) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  }
+  html::-webkit-scrollbar {
+    width: 6px;
+  }
+  html::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  html::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+  }
+}
+
+/* --- コンテナ内スクロール（一覧タブ、InfoWindow 等） --- */
 .scrollbar-visible {
   overflow-y: auto;
   /* Firefox */
