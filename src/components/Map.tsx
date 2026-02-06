@@ -3,8 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Store } from '@/hooks/useStores'
-import SimpleBarJS from 'simplebar'
-import 'simplebar/dist/simplebar.min.css'
 
 interface MapProps {
   stores: Store[]
@@ -83,10 +81,9 @@ export default function Map({ stores, selectedStore }: MapProps) {
 
         // ボタンにIDを付けて、後からイベントリスナーを追加
         const buttonId = `detail-btn-${store.id}`
-        const containerId = `info-container-${store.id}`
 
         const contentString = `
-          <div id="${containerId}" data-simplebar style="padding: 12px; max-width: 280px; max-height: 50vh; font-family: sans-serif;">
+          <div style="padding: 12px; max-width: 280px; font-family: sans-serif;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #333333;">
               ${store.name}
             </h3>
@@ -142,12 +139,6 @@ ${store.business_hours ? `
 
         // InfoWindowが開いた後にボタンにイベントリスナーを追加
         infoWindow.addListener('domready', () => {
-          // SimpleBarを初期化
-          const container = document.getElementById(containerId)
-          if (container && !container.classList.contains('simplebar-initialized')) {
-            new SimpleBarJS(container)
-          }
-
           const button = document.getElementById(buttonId)
           if (button) {
             // 既存のイベントリスナーを削除してから追加

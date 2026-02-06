@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import SimpleBar from 'simplebar-react'
-import 'simplebar-react/dist/simplebar.min.css'
 import StoreList from '@/components/StoreList'
 import { useStores, Store } from '@/hooks/useStores'
 import Footer from '@/components/Footer'
@@ -27,7 +25,7 @@ export default function HomePage() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const { stores } = useStores()
+  const { stores, loading: storesLoading } = useStores()
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -97,7 +95,7 @@ export default function HomePage() {
     setActiveTab('map')
   }
 
-  if (!mounted || loading) {
+  if (!mounted || loading || storesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -245,9 +243,9 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          <SimpleBar style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
             <StoreList stores={filteredStores} onStoreClick={handleStoreClick} />
-          </SimpleBar>
+          </div>
         </div>
 
         {/* PC: 右側地図 / スマホ: タブで切り替え */}

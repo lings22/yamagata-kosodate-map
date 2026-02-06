@@ -12,7 +12,7 @@ export default function StoresPage() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const { stores } = useStores()
+  const { stores, loading: storesLoading } = useStores()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
 
@@ -80,7 +80,7 @@ export default function StoresPage() {
     router.push(`/stores/${store.id}`)
   }
 
-  if (!mounted || loading) {
+  if (!mounted || loading || storesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
