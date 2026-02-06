@@ -2,12 +2,23 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 export default function Footer() {
   const [showMenu, setShowMenu] = useState(false)
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await signOut()
+    setShowMenu(false)
+    router.refresh()
+  }
 
   return (
     <>
+      {/* PC版フッター */}
       <footer className="hidden md:block bg-white border-t border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap justify-center gap-6 mb-4">
@@ -29,6 +40,14 @@ export default function Footer() {
             <Link href="/privacy" className="text-sm text-gray-600 hover:text-orange-500 transition">
               プライバシーポリシー
             </Link>
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="text-sm text-gray-600 hover:text-orange-500 transition"
+              >
+                ログアウト
+              </button>
+            )}
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-2">
@@ -41,6 +60,7 @@ export default function Footer() {
         </div>
       </footer>
 
+      {/* スマホ版 ☰ ボタン */}
       <button
         onClick={() => setShowMenu(true)}
         className="md:hidden fixed bottom-6 right-6 bg-orange-400 hover:bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-40 transition"
@@ -48,6 +68,7 @@ export default function Footer() {
         ☰
       </button>
 
+      {/* スマホ版メニュー */}
       {showMenu && (
         <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end" onClick={() => setShowMenu(false)}>
           <div className="bg-white w-full rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -74,6 +95,14 @@ export default function Footer() {
               <Link href="/privacy" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 プライバシーポリシー
               </Link>
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left py-3 text-red-500 hover:text-red-600 border-b border-gray-200"
+                >
+                  ログアウト
+                </button>
+              )}
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-600 mb-2">
