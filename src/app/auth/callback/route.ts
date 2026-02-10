@@ -42,8 +42,7 @@ export async function GET(request: Request) {
     
     if (error) {
       console.error('認証エラー:', error)
-      // エラーがあってもログインページにリダイレクト
-      return NextResponse.redirect(new URL('/login?message=メール確認が完了しました。ログインしてください。', requestUrl.origin))
+      return NextResponse.redirect(new URL('/login?message=メール確認に失敗しました。リンクの有効期限が切れている可能性があります。もう一度お試しください。', requestUrl.origin))
     }
     
     return NextResponse.redirect(new URL('/', requestUrl.origin))

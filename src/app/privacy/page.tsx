@@ -9,7 +9,7 @@ export default function PrivacyPage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-4">
               <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                山形子育てマップ
+                山形てくてくマップ
               </h1>
             </Link>
           </div>
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-2xl font-bold text-gray-800 mb-4">1. 個人情報の取り扱いについて</h2>
               <p>
-                株式会社パルティード（以下「当社」といいます）は、山形子育てマップ（以下「本サービス」といいます）において、
+                株式会社パルティード（以下「当社」といいます）は、山形てくてくマップ（以下「本サービス」といいます）において、
                 ユーザーの個人情報を以下の通り取り扱います。
               </p>
             </section>

@@ -179,6 +179,7 @@ export default function AddStorePage() {
         }
         lat = coords.lat
         lng = coords.lng
+        setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))
       }
 
       const duplicate = await checkDuplicate(lat, lng)

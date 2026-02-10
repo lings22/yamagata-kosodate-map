@@ -118,12 +118,34 @@ export default function EditStorePage() {
     setLoading(true)
 
     try {
+      let lat = formData.latitude
+      let lng = formData.longitude
+
+      // 住所が変更されていた場合、Geocodingで新しい座標を取得
+      if (store && formData.address !== store.address) {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(formData.address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        )
+        const data = await response.json()
+
+        if (data.status === 'OK' && data.results[0]) {
+          lat = data.results[0].geometry.location.lat
+          lng = data.results[0].geometry.location.lng
+        } else {
+          alert('新しい住所から位置情報を取得できませんでした。住所を確認してください。')
+          setLoading(false)
+          return
+        }
+      }
+
       const supabase = createClient()
       const { error } = await supabase
         .from('stores')
         .update({
           name: formData.name,
           address: formData.address,
+          latitude: lat,
+          longitude: lng,
           has_chair_0_6m: formData.has_child_chair || formData.chair_count_0_6m > 0,
           has_chair_6_18m: formData.has_child_chair || formData.chair_count_6_18m > 0,
           has_chair_18m_3y: formData.has_child_chair || formData.chair_count_18m_3y > 0,

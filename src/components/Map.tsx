@@ -4,6 +4,17 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Store } from '@/hooks/useStores'
 
+function escapeHtml(str: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }
+  return str.replace(/[&<>"']/g, (char) => map[char])
+}
+
 interface MapProps {
   stores: Store[]
   selectedStore: Store | null
@@ -20,8 +31,16 @@ export default function Map({ stores, selectedStore }: MapProps) {
   useEffect(() => {
     if (!mapRef.current || googleMapRef.current) return
 
+    let retryCount = 0
+    const MAX_RETRIES = 50
+
     const initMap = () => {
       if (!window.google) {
+        retryCount++
+        if (retryCount > MAX_RETRIES) {
+          console.error('Google Maps APIの読み込みに失敗しました（タイムアウト）')
+          return
+        }
         setTimeout(initMap, 100)
         return
       }
@@ -35,7 +54,6 @@ export default function Map({ stores, selectedStore }: MapProps) {
         gestureHandling: 'greedy',
       })
 
-      console.log('地図を初期化しました')
     }
 
     initMap()
@@ -44,11 +62,8 @@ export default function Map({ stores, selectedStore }: MapProps) {
   // マーカーを常に再生成（stores が変わるたび）
   useEffect(() => {
     if (!googleMapRef.current) {
-      console.log('地図がまだ初期化されていません')
       return
     }
-
-    console.log(`マーカーを生成します: ${stores.length}店舗`)
 
     // 既存のマーカーをすべて削除
     markersRef.current.forEach(marker => marker.setMap(null))
@@ -61,8 +76,6 @@ export default function Map({ stores, selectedStore }: MapProps) {
         map: googleMapRef.current!,
         title: store.name,
       })
-
-      console.log(`マーカー ${index + 1}: ${store.name}`)
 
       marker.addListener('click', () => {
         if (infoWindowRef.current) {
@@ -85,14 +98,14 @@ export default function Map({ stores, selectedStore }: MapProps) {
         const contentString = `
           <div style="padding: 12px; max-width: 280px; font-family: sans-serif;">
             <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #333333;">
-              ${store.name}
+              ${escapeHtml(store.name)}
             </h3>
             <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
-  ${store.address}
+  ${escapeHtml(store.address)}
 </p>
 ${store.business_hours ? `
   <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
-    🕐 ${store.business_hours}
+    🕐 ${escapeHtml(store.business_hours)}
   </p>
 ` : ''}
             ${hasChair ? `
@@ -167,7 +180,6 @@ ${store.business_hours ? `
       markersRef.current.push(marker)
     })
 
-    console.log(`マーカー生成完了: ${markersRef.current.length}個`)
   }, [stores, router])
 
   // 選択された店舗にフォーカス
