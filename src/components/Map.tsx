@@ -31,6 +31,18 @@ export default function Map({ stores, selectedStore }: MapProps) {
   useEffect(() => {
     if (!mapRef.current || googleMapRef.current) return
 
+if (!window.google) {
+      const existingScript = document.getElementById('google-maps-api-script')
+      if (!existingScript) {
+        const script = document.createElement('script')
+        script.id = 'google-maps-api-script'
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&language=ja`
+        script.async = true
+        script.defer = true
+        document.head.appendChild(script)
+      }
+    }
+    
     let retryCount = 0
     const MAX_RETRIES = 50
 
