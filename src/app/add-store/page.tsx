@@ -36,6 +36,7 @@ export default function AddStorePage() {
     diaper_changing_detail: '',
     stroller_accessible: false,
     comment: '',
+    business_hours: '',
   })
 
   useEffect(() => {
@@ -223,6 +224,7 @@ export default function AddStorePage() {
         diaper_changing_detail: formData.diaper_changing_detail,
         stroller_accessible: formData.stroller_accessible,
         comment: formData.comment,
+        business_hours: formData.business_hours,
         posted_by: user?.id,
       })
 
@@ -328,6 +330,19 @@ export default function AddStorePage() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    🕐 営業時間
+                  </label>
+                  <textarea
+                    value={formData.business_hours}
+                    onChange={(e) => setFormData({ ...formData, business_hours: e.target.value })}
+                    placeholder="例：11:00〜15:00 / 17:00〜22:00（定休日: 水曜）"
+                    rows={2}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
                   />
                 </div>
