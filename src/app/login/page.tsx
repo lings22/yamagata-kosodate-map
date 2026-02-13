@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,7 +19,14 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlMessage = searchParams.get('message')
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, user, loading: authLoading } = useAuth()
+
+  // ログイン済みならトップページへリダイレクト（ブラウザバック対策）
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/')
+    }
+  }, [authLoading, user, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

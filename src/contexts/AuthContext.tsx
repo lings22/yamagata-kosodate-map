@@ -48,44 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
-    const initializeAuth = async () => {
-      try {
-        const authPromise = supabase.auth.getUser()
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => {
-            reject(new Error('認証状態の取得がタイムアウトしました'))
-          }, 8000)
-        })
-
-        const { data: { user } } = await Promise.race([authPromise, timeoutPromise])
-
-        if (!isMounted) return
-
-        setUser(user)
-        setLoading(false)
-
-        if (user) {
-          void checkAdmin(user.id)
-        } else {
-          setIsAdmin(false)
-        }
-      } catch (err) {
-        console.error('セッション取得エラー:', err)
-        if (isMounted) {
-          setUser(null)
-          setIsAdmin(false)
-          setLoading(false)
-        }
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId)
-      }
-    }
-
-    void initializeAuth()
-
-    // 認証状態の変更を監視
+    // onAuthStateChange が INITIAL_SESSION を即座に発火し、
+    // その後の TOKEN_REFRESHED / SIGNED_IN / SIGNED_OUT も監視する。
+    // middleware がリクエストごとにcookieをリフレッシュ済みのため、
+    // クライアント側で getUser() を呼ぶ必要はない。
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!isMounted) return
@@ -104,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [checkAdmin, supabase])
