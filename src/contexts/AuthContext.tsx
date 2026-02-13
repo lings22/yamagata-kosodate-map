@@ -21,8 +21,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   
-  // useRefで一度だけクライアントを作成
-  const supabaseRef = useRef(createClient())
+  // 毎レンダーで createClient() が評価されないように遅延初期化
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  if (!supabaseRef.current) {
+    supabaseRef.current = createClient()
+  }
   const supabase = supabaseRef.current
 
   const checkAdmin = useCallback(async (userId: string) => {

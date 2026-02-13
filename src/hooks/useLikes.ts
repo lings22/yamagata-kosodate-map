@@ -10,9 +10,12 @@ export function useLikes(storeId: string) {
   const [likesCount, setLikesCount] = useState(0)
   const [loading, setLoading] = useState(false)
   
-  // Supabaseクライアントを一度だけ作成
-  const supabaseRef = useRef(createClient())
-  const supabase = supabaseRef.current
+// 毎レンダーで createClient() が評価されないように遅延初期化
+const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+if (!supabaseRef.current) {
+  supabaseRef.current = createClient()
+}
+const supabase = supabaseRef.current
 
   useEffect(() => {
     let isMounted = true
