@@ -48,26 +48,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let watchdogId: ReturnType<typeof setTimeout> | null = null
 
-    // セーフティタイムアウト:
-    // createBrowserClient の _initialize()（トークンリフレッシュ等）が
-    // ハングした場合でも、loading を確実に解除する。
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) {
-        setLoading(false)
+    const finishLoadingSafely = () => {
+      if (!isMounted) return
+      setLoading(false)
+      if (watchdogId) {
+        clearTimeout(watchdogId)
+        watchdogId = null
       }
-    }, 3000)
+    }
 
-    // onAuthStateChange が INITIAL_SESSION を即座に発火し、
-    // その後の TOKEN_REFRESHED / SIGNED_IN / SIGNED_OUT も監視する。
+    const initializeAuth = async () => {
+      try {
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('getSession timeout')), 8000)
+          ),
+        ])
+
+        const { data: { session }, error } = sessionResult
+        if (error) throw error
+
+        let user = session?.user ?? null
+
+        // getSession で user が取れないケースを保険で補完
+        if (!user) {
+          const userResult = await Promise.race([
+            supabase.auth.getUser(),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('getUser timeout')), 8000)
+            ),
+          ])
+          user = userResult.data.user ?? null
+        }
+
+        if (!isMounted) return
+
+        setUser(user)
+        finishLoadingSafely()
+
+        if (user) {
+          void checkAdmin(user.id)
+        } else {
+          setIsAdmin(false)
+        }
+      } catch (err) {
+        console.error('セッション取得エラー:', err)
+        finishLoadingSafely()
+      }
+    }
+
+    // どんな異常系でも無限ローディングにしない最後の保険
+    watchdogId = setTimeout(() => {
+      console.warn('Auth loading watchdog fired')
+      finishLoadingSafely()
+    }, 10000)
+
+    void initializeAuth()
+
+    // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        clearTimeout(safetyTimer)
         if (!isMounted) return
 
         const currentUser = session?.user ?? null
         setUser(currentUser)
-        setLoading(false)
+        finishLoadingSafely()
 
         if (currentUser) {
           void checkAdmin(currentUser.id)
@@ -79,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
-      clearTimeout(safetyTimer)
+      if (watchdogId) clearTimeout(watchdogId)
       subscription.unsubscribe()
     }
   }, [checkAdmin, supabase])
