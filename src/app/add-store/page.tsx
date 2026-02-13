@@ -6,6 +6,12 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase'
 
+type DuplicateStore = {
+  id: string
+  name: string
+  address: string
+}
+
 export default function AddStorePage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -14,7 +20,7 @@ export default function AddStorePage() {
   const [showManualInput, setShowManualInput] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null)
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)
-  const [duplicateStore, setDuplicateStore] = useState<any>(null)
+  const [duplicateStore, setDuplicateStore] = useState<DuplicateStore | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -43,7 +49,7 @@ export default function AddStorePage() {
     if (authLoading) return
 
     if (!user) {
-      router.push('/login')
+      router.replace('/login')
       return
     }
 

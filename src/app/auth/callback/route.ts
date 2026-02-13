@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { EmailOtpType } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -39,10 +40,11 @@ export async function GET(request: Request) {
   }
 
   // メール確認フロー（token_hashがある場合）
-  if (token_hash && type) {
+  const otpTypes: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email']
+  if (token_hash && type && otpTypes.includes(type as EmailOtpType)) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash,
-      type: type as any,
+      type: type as EmailOtpType,
     })
     
     if (error) {

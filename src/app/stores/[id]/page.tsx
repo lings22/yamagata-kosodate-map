@@ -9,6 +9,14 @@ import { Store } from '@/hooks/useStores'
 import { useLikes } from '@/hooks/useLikes'
 import Footer from '@/components/Footer'
 
+type Review = {
+  id: string
+  store_id: string
+  nickname: string
+  content: string
+  created_at: string
+}
+
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -16,7 +24,7 @@ export default function StoreDetailPage() {
   const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
-  const [reviews, setReviews] = useState<any[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
   const [nickname, setNickname] = useState('')
   const [reviewContent, setReviewContent] = useState('')
   const [submitting, setSubmitting] = useState(false)

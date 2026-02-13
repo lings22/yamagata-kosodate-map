@@ -44,7 +44,7 @@ export default function EditStorePage() {
     if (authLoading) return    // ← この1行を追加
 
     if (!user) {
-      router.push('/login')
+      router.replace('/login')
       return
     }
 
@@ -105,7 +105,7 @@ export default function EditStorePage() {
     }
 
     fetchStore()
-  }, [authLoading, user, router, storeId])
+  }, [authLoading, user, isAdmin, router, storeId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

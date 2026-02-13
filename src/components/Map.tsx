@@ -70,7 +70,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
     markersRef.current = []
 
     // マーカーを作成
-    stores.forEach((store, index) => {
+    stores.forEach((store) => {
       const marker = new window.google.maps.Marker({
         position: { lat: store.latitude, lng: store.longitude },
         map: googleMapRef.current!,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -11,10 +11,8 @@ import Footer from '@/components/Footer'
 export default function StoresPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const { stores, loading: storesLoading } = useStores()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null)
 
   const [filters, setFilters] = useState({
     hasChair: false,
@@ -24,10 +22,6 @@ export default function StoresPage() {
     hasDiaperChanging: false,
     strollerAccessible: false,
   })
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const filteredStores = useMemo(() => {
     let result = stores
@@ -75,7 +69,7 @@ export default function StoresPage() {
     router.push(`/stores/${store.id}`)
   }
 
-  if (!mounted) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

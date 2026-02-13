@@ -47,7 +47,7 @@ export function useLikes(storeId: string) {
   const toggleLike = useCallback(async () => {
     if (!user?.id) {
       alert('いいねするにはログインが必要です')
-      window.location.href = '/login'
+      window.location.replace('/login')
       return
     }
 

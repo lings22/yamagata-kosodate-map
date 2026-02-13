@@ -1,11 +1,18 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
 type Tab = 'login' | 'register'
+
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) {
+    return err.message
+  }
+  return fallback
+}
 
 // useSearchParamsを使うコンポーネントを分離
 function LoginForm() {
@@ -21,13 +28,6 @@ function LoginForm() {
   const urlMessage = searchParams.get('message')
   const { signIn, signUp, user, loading: authLoading } = useAuth()
 
-  // ログイン済みならトップページへリダイレクト（ブラウザバック対策）
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.replace('/')
-    }
-  }, [authLoading, user, router])
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -36,12 +36,13 @@ function LoginForm() {
 
     try {
       await signIn(email, password)
-      router.push('/')
-    } catch (err: any) {
-      if (err.message?.includes('Email not confirmed')) {
+      router.replace('/')
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'ログインに失敗しました')
+      if (errorMessage.includes('Email not confirmed')) {
         setError('メールアドレスが確認されていません。確認メール内のリンクをクリックしてください。')
       } else {
-        setError(err.message || 'ログインに失敗しました')
+        setError(errorMessage)
       }
     } finally {
       setLoading(false)
@@ -71,8 +72,8 @@ function LoginForm() {
       setEmail('')
       setPassword('')
       setConfirmPassword('')
-    } catch (err: any) {
-      setError(err.message || '登録に失敗しました')
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '登録に失敗しました'))
     } finally {
       setLoading(false)
     }
