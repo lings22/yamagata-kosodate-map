@@ -14,14 +14,13 @@ export async function GET(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, '', options)
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
         },
       },
     }
@@ -29,7 +28,13 @@ export async function GET(request: Request) {
 
   // PKCEフロー（codeがある場合）
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('セッション交換エラー:', error)
+      return NextResponse.redirect(
+        new URL('/login?message=ログイン処理に失敗しました。もう一度お試しください。', requestUrl.origin)
+      )
+    }
     return NextResponse.redirect(new URL('/', requestUrl.origin))
   }
 

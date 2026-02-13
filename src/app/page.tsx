@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -24,7 +24,6 @@ const Map = dynamic(() => import('@/components/Map'), {
 export default function HomePage() {
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const { stores, loading: storesLoading } = useStores()
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
@@ -43,10 +42,6 @@ export default function HomePage() {
     hasDiaperChanging: false,
     strollerAccessible: false,
   })
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const filteredStores = useMemo(() => {
     let result = stores
@@ -95,7 +90,7 @@ export default function HomePage() {
     setActiveTab('map')
   }
 
-  if (!mounted || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
 
@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
 
-  const checkAdmin = async (userId: string) => {
+  const checkAdmin = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -44,47 +44,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('checkAdmin エラー:', err)
       setIsAdmin(false)
     }
-  }
+  }, [supabase])
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
 
-    // 現在のユーザーを取得
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!isMounted) return
-      setUser(user)
-      if (user) {
-        await checkAdmin(user.id)
-      }
-      setLoading(false)
-    }).catch((err) => {
-      console.error('セッション取得エラー:', err)
-      if (isMounted) {
-        setUser(null)
-        setIsAdmin(false)
-        setLoading(false)
-      }
-    })
+    const initializeAuth = async () => {
+      try {
+        const authPromise = supabase.auth.getUser()
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error('認証状態の取得がタイムアウトしました'))
+          }, 8000)
+        })
 
-    // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+        const { data: { user } } = await Promise.race([authPromise, timeoutPromise])
+
         if (!isMounted) return
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await checkAdmin(session.user.id)
+
+        setUser(user)
+        setLoading(false)
+
+        if (user) {
+          void checkAdmin(user.id)
         } else {
           setIsAdmin(false)
         }
+      } catch (err) {
+        console.error('セッション取得エラー:', err)
+        if (isMounted) {
+          setUser(null)
+          setIsAdmin(false)
+          setLoading(false)
+        }
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId)
+      }
+    }
+
+    void initializeAuth()
+
+    // 認証状態の変更を監視
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!isMounted) return
+
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
         setLoading(false)
+
+        if (currentUser) {
+          void checkAdmin(currentUser.id)
+        } else {
+          setIsAdmin(false)
+        }
       }
     )
 
     return () => {
       isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
-  }, [])  // ← 依存配列を空に
+  }, [checkAdmin, supabase])
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
