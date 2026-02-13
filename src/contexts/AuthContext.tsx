@@ -53,6 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true
     let watchdogId: ReturnType<typeof setTimeout> | null = null
 
+    const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+      return new Promise<T>((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${label} timeout`))
+        }, ms)
+
+        promise
+          .then((value) => {
+            if (timeoutId) clearTimeout(timeoutId)
+            resolve(value)
+          })
+          .catch((error) => {
+            if (timeoutId) clearTimeout(timeoutId)
+            reject(error)
+          })
+      })
+    }
+
     const finishLoadingSafely = () => {
       if (!isMounted) return
       setLoading(false)
@@ -64,12 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('getSession timeout')), 8000)
-          ),
-        ])
+        const sessionResult = await withTimeout(supabase.auth.getSession(), 8000, 'getSession')
 
         const { data: { session }, error } = sessionResult
         if (error) throw error
@@ -78,12 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // getSession で user が取れないケースを保険で補完
         if (!user) {
-          const userResult = await Promise.race([
-            supabase.auth.getUser(),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('getUser timeout')), 8000)
-            ),
-          ])
+          const userResult = await withTimeout(supabase.auth.getUser(), 8000, 'getUser')
           user = userResult.data.user ?? null
         }
 
