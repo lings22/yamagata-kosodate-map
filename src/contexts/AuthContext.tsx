@@ -49,12 +49,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true
 
+    // セーフティタイムアウト:
+    // createBrowserClient の _initialize()（トークンリフレッシュ等）が
+    // ハングした場合でも、loading を確実に解除する。
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false)
+      }
+    }, 3000)
+
     // onAuthStateChange が INITIAL_SESSION を即座に発火し、
     // その後の TOKEN_REFRESHED / SIGNED_IN / SIGNED_OUT も監視する。
-    // middleware がリクエストごとにcookieをリフレッシュ済みのため、
-    // クライアント側で getUser() を呼ぶ必要はない。
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        clearTimeout(safetyTimer)
         if (!isMounted) return
 
         const currentUser = session?.user ?? null
@@ -71,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      clearTimeout(safetyTimer)
       subscription.unsubscribe()
     }
   }, [checkAdmin, supabase])

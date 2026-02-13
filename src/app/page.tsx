@@ -90,17 +90,6 @@ export default function HomePage() {
     setActiveTab('map')
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200 z-10">
@@ -113,7 +102,7 @@ export default function HomePage() {
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {user ? (
+              {!loading && user ? (
                 <>
                   <Link
                     href="/add-store"
@@ -129,14 +118,14 @@ export default function HomePage() {
                     ログアウト
                   </button>
                 </>
-              ) : (
+              ) : !loading ? (
                 <Link
                   href="/login"
                   className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
                 >
                   ログイン
                 </Link>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

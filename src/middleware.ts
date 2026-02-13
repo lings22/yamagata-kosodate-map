@@ -29,8 +29,16 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // セッションをリフレッシュ（期限切れトークンを自動更新）
-  await supabase.auth.getUser()
+  // セッションをリフレッシュ（タイムアウト付き）
+  // getUser() がハングした場合でもページ配信をブロックしない
+  try {
+    await Promise.race([
+      supabase.auth.getUser(),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ])
+  } catch {
+    // セッションリフレッシュ失敗時も続行（ページは表示する）
+  }
 
   return supabaseResponse
 }

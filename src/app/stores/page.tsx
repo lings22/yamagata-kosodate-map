@@ -75,7 +75,7 @@ export default function StoresPage() {
     router.push(`/stores/${store.id}`)
   }
 
-  if (!mounted || loading) {
+  if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -98,7 +98,7 @@ export default function StoresPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {user ? (
+              {!loading && user ? (
                 <Link
                   href="/add-store"
                   className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
@@ -106,14 +106,14 @@ export default function StoresPage() {
                   <span className="hidden sm:inline">➕ 店舗を追加</span>
                   <span className="sm:hidden">➕</span>
                 </Link>
-              ) : (
+              ) : !loading ? (
                 <Link
                   href="/login"
                   className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
                 >
                   ログイン
                 </Link>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

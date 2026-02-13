@@ -1,10 +1,10 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
+import { createClient, createPublicClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 import { useLikes } from '@/hooks/useLikes'
 import Footer from '@/components/Footer'
@@ -21,9 +21,13 @@ export default function StoreDetailPage() {
   const [reviewContent, setReviewContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Supabaseクライアントを一度だけ作成
-  const supabaseRef = useRef(createClient())
-  const supabase = supabaseRef.current
+  // 読み取り用（認証不要・即座に使える）
+  const publicSupabaseRef = useRef(createPublicClient())
+  const publicSupabase = publicSupabaseRef.current
+
+  // 書き込み用（削除・口コミ投稿など認証が必要な操作）
+  // useRef ではなく関数内で遅延取得し、ページ読み込み時の _initialize() ブロックを回避
+  const getAuthClient = useCallback(() => createClient(), [])
 
   // 店舗データを認証状態に関係なく即座に取得
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function StoreDetailPage() {
 
     const fetchStore = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await publicSupabase
           .from('stores')
           .select('*')
           .eq('id', storeId)
@@ -60,14 +64,14 @@ export default function StoreDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [storeId, supabase])
+  }, [storeId, publicSupabase])
 
   // 口コミを取得
   useEffect(() => {
     if (!storeId) return
 
     const fetchReviews = async () => {
-      const { data } = await supabase
+      const { data } = await publicSupabase
         .from('reviews')
         .select('*')
         .eq('store_id', storeId)
@@ -77,7 +81,7 @@ export default function StoreDetailPage() {
     }
 
     fetchReviews()
-  }, [storeId, supabase])
+  }, [storeId, publicSupabase])
 
   const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
 
@@ -86,7 +90,7 @@ export default function StoreDetailPage() {
     if (!confirm('本当にこの店舗を削除しますか？この操作は取り消せません。')) return
 
     try {
-      const { error } = await supabase
+      const { error } = await getAuthClient()
         .from('stores')
         .delete()
         .eq('id', storeId)
@@ -110,7 +114,7 @@ export default function StoreDetailPage() {
     setSubmitting(true)
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getAuthClient()
         .from('reviews')
         .insert({
           store_id: storeId,
@@ -446,7 +450,7 @@ export default function StoreDetailPage() {
                     <button
                       onClick={async () => {
                         if (!confirm('この口コミを削除しますか？')) return
-                        await supabase.from('reviews').delete().eq('id', review.id)
+                        await getAuthClient().from('reviews').delete().eq('id', review.id)
                         setReviews(reviews.filter(r => r.id !== review.id))
                       }}
                       className="text-xs text-red-500 hover:underline mt-2"

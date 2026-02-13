@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { createPublicClient } from '@/lib/supabase'
 
 export type Store = {
   id: string
@@ -43,7 +43,7 @@ export function useStores() {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const supabase = createClient()
+        const supabase = createPublicClient()
         const { data, error } = await supabase
           .from('stores')
           .select('*')
