@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 
 export default function EditStorePage() {
-  const { deviceId, isReady } = useDevice()
+  const { deviceId, isReady, isAdmin } = useDevice()
   const router = useRouter()
   const params = useParams()
   const storeId = params.id as string
@@ -60,8 +60,8 @@ export default function EditStorePage() {
           return
         }
 
-        // デバイスIDで所有者チェック
-        if (data.device_id !== deviceId) {
+        // デバイスIDで所有者チェック（管理者はスキップ）
+        if (!isAdmin && data.device_id !== deviceId) {
           alert('この店舗を編集する権限がありません')
           router.push(`/stores/${storeId}`)
           return
@@ -101,7 +101,7 @@ export default function EditStorePage() {
     }
 
     fetchStore()
-  }, [isReady, deviceId, router, storeId])
+  }, [isReady, deviceId, isAdmin, router, storeId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -206,6 +206,13 @@ export default function EditStorePage() {
           </div>
         </div>
       </header>
+
+      {/* 管理者モードバナー */}
+      {isAdmin && (
+        <div className="bg-red-50 border-b border-red-200 py-2 text-center">
+          <span className="text-sm text-red-600 font-medium">🔓 管理者モードで編集中</span>
+        </div>
+      )}
 
       {/* メインコンテンツ */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

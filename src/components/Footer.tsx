@@ -2,9 +2,49 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useDevice } from '@/contexts/DeviceContext'
 
 export default function Footer() {
   const [showMenu, setShowMenu] = useState(false)
+  const [showAdminModal, setShowAdminModal] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
+  const { isAdmin, adminLogin, adminLogout } = useDevice()
+
+  const handleAdminLogin = () => {
+    if (adminLogin(adminPassword)) {
+      setAdminPassword('')
+      setShowAdminModal(false)
+      alert('管理者モードになりました')
+    } else {
+      alert('パスワードが正しくありません')
+    }
+  }
+
+  const handleAdminLogout = () => {
+    adminLogout()
+    alert('管理者モードを解除しました')
+  }
+
+  const AdminButton = ({ className }: { className?: string }) => {
+    if (isAdmin) {
+      return (
+        <button
+          onClick={handleAdminLogout}
+          className={className || "text-sm text-red-500 hover:text-red-600 transition"}
+        >
+          🔓 管理者モード解除
+        </button>
+      )
+    }
+    return (
+      <button
+        onClick={() => setShowAdminModal(true)}
+        className={className || "text-sm text-gray-400 hover:text-gray-600 transition"}
+      >
+        🔒 管理者
+      </button>
+    )
+  }
 
   return (
     <>
@@ -35,9 +75,10 @@ export default function Footer() {
             <p className="text-sm text-gray-600 mb-2">
               運営: <a href="https://partido.co.jp/" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">株式会社パルティード</a>
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mb-3">
               © 2026 株式会社パルティード All rights reserved.
             </p>
+            <AdminButton />
           </div>
         </div>
       </footer>
@@ -82,7 +123,40 @@ export default function Footer() {
               <p className="text-sm text-gray-600 mb-2">
                 運営: <a href="https://partido.co.jp/" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">株式会社パルティード</a>
               </p>
-              <p className="text-xs text-gray-500">© 2026 株式会社パルティード</p>
+              <p className="text-xs text-gray-500 mb-3">© 2026 株式会社パルティード</p>
+              <AdminButton />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 管理者パスワード入力モーダル */}
+      {showAdminModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4" onClick={() => setShowAdminModal(false)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">🔒 管理者ログイン</h3>
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+              placeholder="パスワードを入力"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-800 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowAdminModal(false); setAdminPassword('') }}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAdminLogin}
+                className="flex-1 px-4 py-3 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg transition"
+              >
+                ログイン
+              </button>
             </div>
           </div>
         </div>

@@ -20,7 +20,7 @@ type Review = {
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { deviceId } = useDevice()
+  const { deviceId, isAdmin } = useDevice()
   const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,8 +87,9 @@ export default function StoreDetailPage() {
 
   const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
 
-  // 自分が追加した店舗かどうか
+  // 自分が追加した店舗かどうか（または管理者）
   const isOwner = !!(deviceId && store?.device_id && deviceId === store.device_id)
+  const canEdit = isOwner || isAdmin
 
   const handleDelete = async () => {
     if (!storeId) return
@@ -107,6 +108,24 @@ export default function StoreDetailPage() {
     } catch (error) {
       console.error('削除エラー:', error)
       alert('削除に失敗しました')
+    }
+  }
+
+  const handleReviewDelete = async (reviewId: string) => {
+    if (!confirm('この口コミを削除しますか？')) return
+
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', reviewId)
+
+      if (error) throw error
+
+      setReviews(reviews.filter(r => r.id !== reviewId))
+    } catch (error) {
+      console.error('口コミ削除エラー:', error)
+      alert('口コミの削除に失敗しました')
     }
   }
 
@@ -211,6 +230,13 @@ export default function StoreDetailPage() {
         </div>
       </header>
 
+      {/* 管理者モードバナー */}
+      {isAdmin && (
+        <div className="bg-red-50 border-b border-red-200 py-2 text-center">
+          <span className="text-sm text-red-600 font-medium">🔓 管理者モードで閲覧中</span>
+        </div>
+      )}
+
       {/* メインコンテンツ */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 店舗名といいねボタン */}
@@ -221,16 +247,15 @@ export default function StoreDetailPage() {
               onClick={toggleLike}
               className={`flex items-center gap-1 px-3 py-2 rounded-full transition ${
                 isLiked
-                  ? 'bg-red-50 text-red-500'
-                  : 'bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500'
+                  ? 'bg-pink-100 text-pink-500'
+                  : 'bg-gray-100 text-gray-400 hover:bg-pink-50 hover:text-pink-400'
               }`}
             >
-              <span className="text-xl">{isLiked ? '❤️' : '🤍'}</span>
-              <span className="text-sm font-medium">{displayLikesCount}</span>
+              <span className="text-xl">{isLiked ? '💖' : '🤍'}</span>
+              <span className="font-bold text-lg">{displayLikesCount}</span>
             </button>
           </div>
-
-          <div className="space-y-3 text-gray-600">
+          <div className="space-y-2 text-gray-600">
             <div className="flex items-start gap-2">
               <span className="text-xl">📍</span>
               <span className="flex-1">{store.address}</span>
@@ -243,8 +268,8 @@ export default function StoreDetailPage() {
             )}
           </div>
 
-          {/* 自分が追加した店舗の場合、編集・削除ボタンを表示 */}
-          {isOwner && (
+          {/* 編集・削除ボタン（オーナーまたは管理者） */}
+          {canEdit && (
             <div className="mt-4 pt-4 border-t border-gray-200 flex gap-3">
               <Link
                 href={`/stores/${storeId}/edit`}
@@ -258,6 +283,9 @@ export default function StoreDetailPage() {
               >
                 🗑️ 削除
               </button>
+              {isAdmin && !isOwner && (
+                <span className="text-xs text-red-400 self-center">※管理者権限</span>
+              )}
             </div>
           )}
         </div>
@@ -435,9 +463,20 @@ export default function StoreDetailPage() {
                 <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-gray-800">🙂 {review.nickname}</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(review.created_at).toLocaleDateString('ja-JP')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {new Date(review.created_at).toLocaleDateString('ja-JP')}
+                      </span>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleReviewDelete(review.id)}
+                          className="text-xs text-red-400 hover:text-red-600 transition"
+                          title="口コミを削除"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-gray-700 leading-relaxed">{review.content}</p>
                 </div>
