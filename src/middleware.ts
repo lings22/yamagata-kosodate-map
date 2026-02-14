@@ -29,16 +29,11 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // セッションをリフレッシュ（タイムアウト付き）
-  // getUser() がハングした場合でもページ配信をブロックしない
-  try {
-    await Promise.race([
-      supabase.auth.getUser(),
-      new Promise((resolve) => setTimeout(resolve, 5000)),
-    ])
-  } catch {
-    // セッションリフレッシュ失敗時も続行（ページは表示する）
-  }
+  // セッションCookieの受け渡しのみ（ネットワーク通信なし・即座に完了）
+  // 旧: getUser() → Supabase APIへ毎回通信し1-5秒ページ配信をブロックしていた
+  // 新: getSession() → Cookieを読み取るだけなのでブロックしない
+  // トークンのリフレッシュはクライアント側の createBrowserClient が自動で行う
+  await supabase.auth.getSession()
 
   return supabaseResponse
 }

@@ -84,26 +84,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const sessionResult = await withTimeout(supabase.auth.getSession(), 8000, 'getSession')
+        const sessionResult = await withTimeout(supabase.auth.getSession(), 5000, 'getSession')
 
         const { data: { session }, error } = sessionResult
         if (error) throw error
 
-        let user = session?.user ?? null
-
-        // getSession で user が取れないケースを保険で補完
-        if (!user) {
-          const userResult = await withTimeout(supabase.auth.getUser(), 8000, 'getUser')
-          user = userResult.data.user ?? null
-        }
-
         if (!isMounted) return
 
-        setUser(user)
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
         finishLoadingSafely()
 
-        if (user) {
-          void checkAdmin(user.id)
+        if (currentUser) {
+          void checkAdmin(currentUser.id)
         } else {
           setIsAdmin(false)
         }
@@ -117,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     watchdogId = setTimeout(() => {
       console.warn('Auth loading watchdog fired')
       finishLoadingSafely()
-    }, 10000)
+    }, 7000)
 
     void initializeAuth()
 
