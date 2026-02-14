@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Store } from '@/hooks/useStores'
 
@@ -26,13 +26,12 @@ export default function Map({ stores, selectedStore }: MapProps) {
   const markersRef = useRef<google.maps.Marker[]>([])
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null)
   const router = useRouter()
-  const [mapReady, setMapReady] = useState(false)
 
   // 地図を初期化（一度だけ）
   useEffect(() => {
     if (!mapRef.current || googleMapRef.current) return
 
-    if (!window.google) {
+if (!window.google) {
       const existingScript = document.getElementById('google-maps-api-script')
       if (!existingScript) {
         const script = document.createElement('script')
@@ -67,16 +66,14 @@ export default function Map({ stores, selectedStore }: MapProps) {
         gestureHandling: 'greedy',
       })
 
-      // 地図の初期化完了をマーク
-      setMapReady(true)
     }
 
     initMap()
   }, [])
 
-  // マーカーを常に再生成（stores が変わるたび、または地図初期化完了時）
+  // マーカーを常に再生成（stores が変わるたび）
   useEffect(() => {
-    if (!googleMapRef.current || !mapReady) {
+    if (!googleMapRef.current) {
       return
     }
 
@@ -120,7 +117,7 @@ export default function Map({ stores, selectedStore }: MapProps) {
 </p>
 ${store.business_hours ? `
   <p style="margin: 0 0 12px 0; font-size: 13px; color: #666666; line-height: 1.4;">
-    🕗 ${escapeHtml(store.business_hours)}
+    🕐 ${escapeHtml(store.business_hours)}
   </p>
 ` : ''}
             ${hasChair ? `
@@ -195,7 +192,7 @@ ${store.business_hours ? `
       markersRef.current.push(marker)
     })
 
-  }, [stores, router, mapReady])
+  }, [stores, router])
 
   // 選択された店舗にフォーカス
   useEffect(() => {

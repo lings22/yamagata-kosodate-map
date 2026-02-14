@@ -54,9 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
               setIsAdmin(data?.is_admin ?? false)
             })
+            .catch((err) => {
+              console.error('管理者チェックエラー:', err)
+              setIsAdmin(false)
+            })
         } else {
           setIsAdmin(false)
         }
+      })
+      .catch((err) => {
+        console.error('セッション初期化エラー:', err)
+        setUser(null)
+        setIsAdmin(false)
+        setLoading(false)
       })
 
     // 認証状態の変更をリアルタイム監視
@@ -79,6 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 return
               }
               setIsAdmin(data?.is_admin ?? false)
+            })
+            .catch((err) => {
+              console.error('管理者チェックエラー:', err)
+              setIsAdmin(false)
             })
         } else {
           setIsAdmin(false)
