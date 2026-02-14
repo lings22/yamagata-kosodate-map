@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
 
@@ -20,92 +20,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  
-  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
-  if (!supabaseRef.current) {
-    supabaseRef.current = createClient()
-  }
-  const supabase = supabaseRef.current
+
+  // シングルトンなので useRef 不要
+  const supabase = createClient()
 
   useEffect(() => {
     let isMounted = true
 
-    // getUser()を使う（getSession()より確実）
-    supabase.auth.getUser()
-      .then(({ data: { user }, error }) => {
+    console.log('[AUTH] useEffect開始', Date.now())
+
+    // --- 管理者チェック ---
+    const checkAdmin = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', userId)
+          .maybeSingle()
+
         if (!isMounted) return
-        
         if (error) {
-          console.error('ユーザー取得エラー:', error)
-          setUser(null)
+          console.error('[AUTH] プロフィール取得エラー:', error)
           setIsAdmin(false)
-          setLoading(false)
           return
         }
+        setIsAdmin(data?.is_admin ?? false)
+        console.log('[AUTH] checkAdmin完了:', data?.is_admin)
+      } catch (err) {
+        console.error('[AUTH] checkAdmin失敗:', err)
+        if (isMounted) setIsAdmin(false)
+      }
+    }
 
-        setUser(user)
-        setLoading(false)
+    // --- 初期セッション取得（5秒タイムアウト付き） ---
+    const init = async () => {
+      console.log('[AUTH] getUser開始', Date.now())
 
-        if (user) {
-          supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', user.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
-              if (!isMounted) return
-              
-              if (error) {
-                console.error('プロフィール取得エラー:', error)
-                setIsAdmin(false)
-                return
-              }
-              setIsAdmin(data?.is_admin ?? false)
-            })
-        } else {
-          setIsAdmin(false)
-        }
-      })
-      .catch((err) => {
-        console.error('認証初期化エラー:', err)
-        if (isMounted) {
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AUTH_TIMEOUT: getUser() 5秒タイムアウト')), 5000)
+        )
+
+        const { data: { user: currentUser }, error } = await Promise.race([
+          supabase.auth.getUser(),
+          timeoutPromise,
+        ]) as Awaited<ReturnType<typeof supabase.auth.getUser>>
+
+        console.log('[AUTH] getUser完了', {
+          hasUser: !!currentUser,
+          error: error?.message,
+          timestamp: Date.now(),
+        })
+
+        if (!isMounted) return
+
+        if (error) {
+          console.warn('[AUTH] getUser error:', error.message)
           setUser(null)
           setIsAdmin(false)
-          setLoading(false)
-        }
-      })
-
-    // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!isMounted) return
-        
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
-
-        if (currentUser) {
-          supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', currentUser.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
-              if (!isMounted) return
-              
-              if (error) {
-                console.error('プロフィール取得エラー:', error)
-                setIsAdmin(false)
-                return
-              }
-              setIsAdmin(data?.is_admin ?? false)
-            })
+        } else if (currentUser) {
+          setUser(currentUser)
+          await checkAdmin(currentUser.id)
         } else {
+          setUser(null)
           setIsAdmin(false)
         }
+      } catch (err) {
+        // タイムアウトまたはネットワークエラー
+        console.error('[AUTH] init失敗（タイムアウトの可能性）:', err)
+        if (!isMounted) return
+        setUser(null)
+        setIsAdmin(false)
+      } finally {
+        if (isMounted) {
+          console.log('[AUTH] setLoading(false)', Date.now())
+          setLoading(false)
+        }
       }
-    )
+    }
+
+    init()
+
+    // --- 認証状態変化リスナー ---
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+      console.log('[AUTH] onAuthStateChange', { event, hasSession: !!session, timestamp: Date.now() })
+
+      if (!isMounted) return
+
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+
+      if (currentUser) {
+        await checkAdmin(currentUser.id)
+      } else {
+        setIsAdmin(false)
+      }
+
+      // リスナー経由でも loading を確実に解除
+      setLoading(false)
+    })
 
     return () => {
+      console.log('[AUTH] cleanup')
       isMounted = false
       subscription.unsubscribe()
     }

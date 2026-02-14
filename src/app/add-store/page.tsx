@@ -148,7 +148,7 @@ export default function AddStorePage() {
 
       if (!data) return null
 
-      const nearby = data.filter(store => {
+      const nearby = data.filter((store: any) => {
         const distance = Math.sqrt(
           Math.pow(store.latitude - lat, 2) + Math.pow(store.longitude - lng, 2)
         ) * 111000
