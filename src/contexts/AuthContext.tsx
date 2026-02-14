@@ -1,11 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
-
-// Supabaseクライアントはモジュールスコープで1回だけ作成
-const supabase = createClient()
 
 type AuthContextType = {
   user: User | null
@@ -23,11 +20,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  
+  // SupabaseクライアントをuseRefで管理（モジュールスコープではなく）
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  if (!supabaseRef.current) {
+    supabaseRef.current = createClient()
+  }
+  const supabase = supabaseRef.current
 
   useEffect(() => {
+    let isMounted = true
+
     // 初回のセッション取得
     supabase.auth.getSession()
       .then(({ data: { session }, error }) => {
+        if (!isMounted) return
+        
         if (error) {
           console.error('セッション取得エラー:', error)
           setUser(null)
@@ -47,6 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .eq('id', currentUser.id)
             .maybeSingle()
             .then(({ data, error }) => {
+              if (!isMounted) return
+              
               if (error) {
                 console.error('プロフィール取得エラー:', error)
                 setIsAdmin(false)
@@ -58,10 +68,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsAdmin(false)
         }
       })
+      .catch((err) => {
+        console.error('セッション初期化エラー:', err)
+        if (isMounted) {
+          setUser(null)
+          setIsAdmin(false)
+          setLoading(false)
+        }
+      })
 
     // 認証状態の変更をリアルタイム監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!isMounted) return
+        
         const currentUser = session?.user ?? null
         setUser(currentUser)
 
@@ -73,6 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .eq('id', currentUser.id)
             .maybeSingle()
             .then(({ data, error }) => {
+              if (!isMounted) return
+              
               if (error) {
                 console.error('プロフィール取得エラー:', error)
                 setIsAdmin(false)
@@ -88,9 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // クリーンアップ
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
-  }, []) // 依存配列は空 - マウント時に1回だけ実行
+  }, [supabase])
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
