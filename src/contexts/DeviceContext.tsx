@@ -6,7 +6,7 @@ type DeviceContextType = {
   deviceId: string | null
   isReady: boolean
   isAdmin: boolean
-  adminLogin: (password: string) => boolean
+  adminLogin: (password: string) => Promise<boolean>
   adminLogout: () => void
 }
 
@@ -14,7 +14,7 @@ const DeviceContext = createContext<DeviceContextType>({
   deviceId: null,
   isReady: false,
   isAdmin: false,
-  adminLogin: () => false,
+  adminLogin: async () => false,
   adminLogout: () => {},
 })
 
@@ -44,14 +44,24 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
     setIsReady(true)
   }, [])
 
-  const adminLogin = (password: string): boolean => {
-    const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD
-    if (password === correctPassword) {
-      setIsAdmin(true)
-      localStorage.setItem(ADMIN_KEY, 'true')
-      return true
+  const adminLogin = async (password: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/admin-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        setIsAdmin(true)
+        localStorage.setItem(ADMIN_KEY, 'true')
+        return true
+      }
+      return false
+    } catch {
+      return false
     }
-    return false
   }
 
   const adminLogout = () => {

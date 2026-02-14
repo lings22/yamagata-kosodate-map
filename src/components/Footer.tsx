@@ -8,10 +8,15 @@ export default function Footer() {
   const [showMenu, setShowMenu] = useState(false)
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [adminPassword, setAdminPassword] = useState('')
+  const [verifying, setVerifying] = useState(false)
   const { isAdmin, adminLogin, adminLogout } = useDevice()
 
-  const handleAdminLogin = () => {
-    if (adminLogin(adminPassword)) {
+  const handleAdminLogin = async () => {
+    setVerifying(true)
+    const success = await adminLogin(adminPassword)
+    setVerifying(false)
+
+    if (success) {
       setAdminPassword('')
       setShowAdminModal(false)
       alert('管理者モードになりました')
@@ -139,23 +144,26 @@ export default function Footer() {
               type="password"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && !verifying && handleAdminLogin()}
               placeholder="パスワードを入力"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-800 mb-4"
               autoFocus
+              disabled={verifying}
             />
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowAdminModal(false); setAdminPassword('') }}
+                disabled={verifying}
                 className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleAdminLogin}
-                className="flex-1 px-4 py-3 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg transition"
+                disabled={verifying}
+                className="flex-1 px-4 py-3 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg transition disabled:opacity-50"
               >
-                ログイン
+                {verifying ? '確認中...' : 'ログイン'}
               </button>
             </div>
           </div>
