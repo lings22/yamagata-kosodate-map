@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/AuthContext'
+import { useDevice } from '@/contexts/DeviceContext'
 import { createClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 
 export default function EditStorePage() {
-  const { user, isAdmin, loading: authLoading } = useAuth()
+  const { deviceId, isReady } = useDevice()
   const router = useRouter()
   const params = useParams()
   const storeId = params.id as string
@@ -41,12 +41,7 @@ export default function EditStorePage() {
   })
 
   useEffect(() => {
-    if (authLoading) return    // ← この1行を追加
-
-    if (!user) {
-      router.replace('/login')
-      return
-    }
+    if (!isReady) return
 
     const fetchStore = async () => {
       try {
@@ -65,7 +60,8 @@ export default function EditStorePage() {
           return
         }
 
-        if (!isAdmin && data.posted_by !== user.id) {
+        // デバイスIDで所有者チェック
+        if (data.device_id !== deviceId) {
           alert('この店舗を編集する権限がありません')
           router.push(`/stores/${storeId}`)
           return
@@ -105,7 +101,7 @@ export default function EditStorePage() {
     }
 
     fetchStore()
-  }, [authLoading, user, isAdmin, router, storeId])
+  }, [isReady, deviceId, router, storeId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -192,7 +188,7 @@ export default function EditStorePage() {
     )
   }
 
-  if (!user || !store) {
+  if (!store) {
     return null
   }
 

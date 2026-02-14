@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useStores, Store } from '@/hooks/useStores'
@@ -9,7 +8,6 @@ import StoreList from '@/components/StoreList'
 import Footer from '@/components/Footer'
 
 export default function StoresPage() {
-  const { user, loading } = useAuth()
   const router = useRouter()
   const { stores, loading: storesLoading } = useStores()
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,22 +79,13 @@ export default function StoresPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {!loading && user ? (
-                <Link
-                  href="/add-store"
-                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
-                >
-                  <span className="hidden sm:inline">➕ 店舗を追加</span>
-                  <span className="sm:hidden">➕</span>
-                </Link>
-              ) : !loading ? (
-                <Link
-                  href="/login"
-                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
-                >
-                  ログイン
-                </Link>
-              ) : null}
+              <Link
+                href="/add-store"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+              >
+                <span className="hidden sm:inline">➕ 店舗を追加</span>
+                <span className="sm:hidden">➕</span>
+              </Link>
             </div>
           </div>
         </div>

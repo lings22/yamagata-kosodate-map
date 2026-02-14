@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AuthProvider } from '@/contexts/AuthContext'
+import { DeviceProvider } from '@/contexts/DeviceContext'
 
 export const metadata: Metadata = {
   title: "山形てくてくマップ | 授乳室・おむつ替え台・子ども椅子情報",
@@ -42,9 +42,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="antialiased">
-        <AuthProvider>
+        <DeviceProvider>
           {children}
-        </AuthProvider>
+        </DeviceProvider>
       </body>
     </html>
   );

@@ -2,19 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
 
 export default function Footer() {
   const [showMenu, setShowMenu] = useState(false)
-  const { user, signOut } = useAuth()
-  const router = useRouter()
-
-  const handleLogout = async () => {
-    await signOut()
-    setShowMenu(false)
-    router.refresh()
-  }
 
   return (
     <>
@@ -40,14 +30,6 @@ export default function Footer() {
             <Link href="/privacy" className="text-sm text-gray-600 hover:text-orange-500 transition">
               プライバシーポリシー
             </Link>
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-orange-500 transition"
-              >
-                ログアウト
-              </button>
-            )}
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-2">
@@ -95,14 +77,6 @@ export default function Footer() {
               <Link href="/privacy" onClick={() => setShowMenu(false)} className="block py-3 text-gray-700 hover:text-orange-500 border-b border-gray-200">
                 プライバシーポリシー
               </Link>
-              {user && (
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left py-3 text-red-500 hover:text-red-600 border-b border-gray-200"
-                >
-                  ログアウト
-                </button>
-              )}
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-600 mb-2">

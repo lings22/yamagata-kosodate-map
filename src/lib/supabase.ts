@@ -1,42 +1,31 @@
-import { createBrowserClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // ========================================
-// 認証付きクライアント（シングルトン）
+// 単一クライアント（シングルトン）
 // ========================================
-// 重要: 毎回 new すると Multiple GoTrueClient instances 警告が出て
-// onAuthStateChange の競合 → 本番環境でのハングの原因になる
-let authClient: ReturnType<typeof createBrowserClient> | null = null
+// @supabase/ssr の createBrowserClient は Cookie にセッションを保存し、
+// Next.js 16 の RSC ハイドレーションを妨害するため使用しない。
+// 通常の @supabase/supabase-js を使用（localStorage ベース）。
+// <any> を指定してデータベース型の推論を回避（never 型エラー防止）。
+
+let client: ReturnType<typeof createSupabaseClient<any>> | null = null
 
 export function createClient() {
-  if (authClient) return authClient
+  if (client) return client
 
-  console.log('[SUPABASE] Creating auth client (singleton)')
-  authClient = createBrowserClient(
+  client = createSupabaseClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
   )
-  return authClient
+  return client
 }
 
-// ========================================
-// 読み取り専用クライアント（認証不要の公開データ取得用）
-// ========================================
-let publicClient: ReturnType<typeof createSupabaseClient> | null = null
-
-export function createPublicClient() {
-  if (!publicClient) {
-    publicClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-        },
-      }
-    )
-  }
-  return publicClient
-}
+// 後方互換性のため（useStores.ts などで使用）
+export const createPublicClient = createClient

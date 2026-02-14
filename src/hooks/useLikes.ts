@@ -1,87 +1,71 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
+
+const LIKES_KEY = 'tekuteku_liked_stores'
+
+function getLikedStores(): string[] {
+  try {
+    const stored = localStorage.getItem(LIKES_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function saveLikedStores(stores: string[]) {
+  localStorage.setItem(LIKES_KEY, JSON.stringify(stores))
+}
 
 export function useLikes(storeId: string) {
-  const { user } = useAuth()
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [loading, setLoading] = useState(false)
-  
-// 毎レンダーで createClient() が評価されないように遅延初期化
-const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
-if (!supabaseRef.current) {
-  supabaseRef.current = createClient()
-}
-const supabase = supabaseRef.current
 
   useEffect(() => {
-    let isMounted = true
-    
-    const fetchLikeStatus = async () => {
-      // user.id で比較（userオブジェクト全体ではなく）
-      if (!user?.id) return
-
-      try {
-        const { data: likeData } = await supabase
-          .from('store_likes')
-          .select('id')
-          .eq('store_id', storeId)
-          .eq('user_id', user.id)
-          .maybeSingle()  // single() → maybeSingle() に変更（データがない場合もエラーにならない）
-
-        if (isMounted) {
-          setIsLiked(!!likeData)
-        }
-      } catch (err) {
-        console.error('いいね状態取得エラー:', err)
-      }
-    }
-
-    fetchLikeStatus()
-    
-    return () => {
-      isMounted = false
-    }
-  }, [storeId, user?.id, supabase])  // user → user?.id に変更
+    if (!storeId) return
+    const liked = getLikedStores()
+    setIsLiked(liked.includes(storeId))
+  }, [storeId])
 
   const toggleLike = useCallback(async () => {
-    if (!user?.id) {
-      alert('いいねするにはログインが必要です')
-      window.location.replace('/login')
-      return
-    }
+    if (!storeId) return
 
     setLoading(true)
     try {
-      if (isLiked) {
-        const { error } = await supabase
-          .from('store_likes')
-          .delete()
-          .eq('store_id', storeId)
-          .eq('user_id', user.id)
+      const liked = getLikedStores()
+      const supabase = createClient()
 
-        if (error) throw error
+      if (isLiked) {
+        // いいね解除
+        const updated = liked.filter(id => id !== storeId)
+        saveLikedStores(updated)
         setIsLiked(false)
         setLikesCount(prev => Math.max(0, prev - 1))
-      } else {
-        const { error } = await supabase
-          .from('store_likes')
-          .insert({ store_id: storeId, user_id: user.id })
 
-        if (error) throw error
+        // DB の likes_count を -1
+        try {
+          await supabase.rpc('decrement_likes', { store_id_input: storeId })
+        } catch { /* DB更新失敗してもUI上は反映済み */ }
+      } else {
+        // いいね追加
+        liked.push(storeId)
+        saveLikedStores(liked)
         setIsLiked(true)
         setLikesCount(prev => prev + 1)
+
+        // DB の likes_count を +1
+        try {
+          await supabase.rpc('increment_likes', { store_id_input: storeId })
+        } catch { /* DB更新失敗してもUI上は反映済み */ }
       }
     } catch (err) {
       console.error('いいねエラー:', err)
-      alert('エラーが発生しました')
     } finally {
       setLoading(false)
     }
-  }, [user?.id, storeId, isLiked, supabase])
+  }, [storeId, isLiked])
 
   return { isLiked, likesCount, loading, toggleLike }
 }

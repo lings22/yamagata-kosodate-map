@@ -1,10 +1,10 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useDevice } from '@/contexts/DeviceContext'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, createPublicClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { Store } from '@/hooks/useStores'
 import { useLikes } from '@/hooks/useLikes'
 import Footer from '@/components/Footer'
@@ -20,7 +20,7 @@ type Review = {
 export default function StoreDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isAdmin, loading: authLoading } = useAuth()
+  const { deviceId } = useDevice()
   const storeId = params?.id as string | undefined
   const [store, setStore] = useState<Store | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,15 +29,9 @@ export default function StoreDetailPage() {
   const [reviewContent, setReviewContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // 読み取り用（認証不要・即座に使える）
-  const publicSupabaseRef = useRef(createPublicClient())
-  const publicSupabase = publicSupabaseRef.current
+  const supabase = createClient()
 
-  // 書き込み用（削除・口コミ投稿など認証が必要な操作）
-  // useRef ではなく関数内で遅延取得し、ページ読み込み時の _initialize() ブロックを回避
-  const getAuthClient = useCallback(() => createClient(), [])
-
-  // 店舗データを認証状態に関係なく即座に取得
+  // 店舗データを取得
   useEffect(() => {
     if (!storeId) {
       setLoading(false)
@@ -48,7 +42,7 @@ export default function StoreDetailPage() {
 
     const fetchStore = async () => {
       try {
-        const { data, error } = await publicSupabase
+        const { data, error } = await supabase
           .from('stores')
           .select('*')
           .eq('id', storeId)
@@ -72,14 +66,14 @@ export default function StoreDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [storeId, publicSupabase])
+  }, [storeId])
 
   // 口コミを取得
   useEffect(() => {
     if (!storeId) return
 
     const fetchReviews = async () => {
-      const { data } = await publicSupabase
+      const { data } = await supabase
         .from('reviews')
         .select('*')
         .eq('store_id', storeId)
@@ -89,16 +83,19 @@ export default function StoreDetailPage() {
     }
 
     fetchReviews()
-  }, [storeId, publicSupabase])
+  }, [storeId])
 
   const { isLiked, likesCount, toggleLike } = useLikes(storeId || '')
+
+  // 自分が追加した店舗かどうか
+  const isOwner = !!(deviceId && store?.device_id && deviceId === store.device_id)
 
   const handleDelete = async () => {
     if (!storeId) return
     if (!confirm('本当にこの店舗を削除しますか？この操作は取り消せません。')) return
 
     try {
-      const { error } = await getAuthClient()
+      const { error } = await supabase
         .from('stores')
         .delete()
         .eq('id', storeId)
@@ -122,7 +119,7 @@ export default function StoreDetailPage() {
     setSubmitting(true)
 
     try {
-      const { data, error } = await getAuthClient()
+      const { data, error } = await supabase
         .from('reviews')
         .insert({
           store_id: storeId,
@@ -190,15 +187,13 @@ export default function StoreDetailPage() {
             </Link>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {!authLoading && user && (
-                <Link
-                  href="/add-store"
-                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
-                >
-                  <span className="hidden sm:inline">➕ 店舗を追加</span>
-                  <span className="sm:hidden">➕</span>
-                </Link>
-              )}
+              <Link
+                href="/add-store"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+              >
+                <span className="hidden sm:inline">➕ 店舗を追加</span>
+                <span className="sm:hidden">➕</span>
+              </Link>
               <Link
                 href="/stores"
                 className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
@@ -220,42 +215,22 @@ export default function StoreDetailPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 店舗名といいねボタン */}
         <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-              {store.name}
-            </h1>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={toggleLike}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-pink-100 hover:bg-pink-200 transition"
-              >
-                <span className="text-2xl">{isLiked ? '❤️' : '🤍'}</span>
-                <span className="text-lg font-semibold text-pink-800">{displayLikesCount}</span>
-              </button>
-              {!authLoading && user && (isAdmin || store.posted_by === user.id) && (
-                <>
-                  <Link
-                    href={`/stores/${store.id}/edit`}
-                    className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
-                  >
-                    <span className="hidden sm:inline">✏️ 編集</span>
-                    <span className="sm:hidden">✏️</span>
-                  </Link>
-                  {isAdmin && (
-                    <button
-                      onClick={handleDelete}
-                      className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold rounded-lg transition"
-                    >
-                      <span className="hidden sm:inline">🗑️ 削除</span>
-                      <span className="sm:hidden">🗑️</span>
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex-1">{store.name}</h2>
+            <button
+              onClick={toggleLike}
+              className={`flex items-center gap-1 px-3 py-2 rounded-full transition ${
+                isLiked
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500'
+              }`}
+            >
+              <span className="text-xl">{isLiked ? '❤️' : '🤍'}</span>
+              <span className="text-sm font-medium">{displayLikesCount}</span>
+            </button>
           </div>
 
-          <div className="space-y-3 text-gray-700">
+          <div className="space-y-3 text-gray-600">
             <div className="flex items-start gap-2">
               <span className="text-xl">📍</span>
               <span className="flex-1">{store.address}</span>
@@ -267,6 +242,24 @@ export default function StoreDetailPage() {
               </div>
             )}
           </div>
+
+          {/* 自分が追加した店舗の場合、編集・削除ボタンを表示 */}
+          {isOwner && (
+            <div className="mt-4 pt-4 border-t border-gray-200 flex gap-3">
+              <Link
+                href={`/stores/${storeId}/edit`}
+                className="px-4 py-2 text-sm font-medium text-orange-500 border border-orange-500 rounded-lg hover:bg-orange-50 transition"
+              >
+                ✏️ 編集
+              </Link>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition"
+              >
+                🗑️ 削除
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 設備情報 */}
@@ -274,7 +267,6 @@ export default function StoreDetailPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-6">設備情報</h2>
           
           <div className="space-y-6">
-            {/* 授乳室 */}
             {store.has_nursing_room && (
               <div className="border-l-4 border-pink-400 pl-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -287,7 +279,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* 座敷 */}
             {store.has_tatami_room && (
               <div className="border-l-4 border-amber-400 pl-4">
                 <div className="flex items-center gap-2">
@@ -297,7 +288,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* おむつ替え台 */}
             {store.has_diaper_changing && (
               <div className="border-l-4 border-blue-400 pl-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -310,7 +300,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* 子ども椅子 */}
             {hasChair && (
               <div className="border-l-4 border-green-400 pl-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -340,7 +329,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* ベビーカー */}
             {store.stroller_accessible && (
               <div className="border-l-4 border-purple-400 pl-4">
                 <div className="flex items-center gap-2">
@@ -350,7 +338,6 @@ export default function StoreDetailPage() {
               </div>
             )}
 
-            {/* 駐車場 */}
             {store.has_parking && (
               <div className="border-l-4 border-orange-400 pl-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -362,7 +349,6 @@ export default function StoreDetailPage() {
                 )}
               </div>
             )}
-
           </div>
         </div>
 
@@ -454,18 +440,6 @@ export default function StoreDetailPage() {
                     </span>
                   </div>
                   <p className="text-gray-700 leading-relaxed">{review.content}</p>
-                  {!authLoading && isAdmin && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm('この口コミを削除しますか？')) return
-                        await getAuthClient().from('reviews').delete().eq('id', review.id)
-                        setReviews(reviews.filter(r => r.id !== review.id))
-                      }}
-                      className="text-xs text-red-500 hover:underline mt-2"
-                    >
-                      削除
-                    </button>
-                  )}
                 </div>
               ))}
             </div>

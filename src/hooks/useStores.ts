@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createPublicClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 
 export type Store = {
   id: string
@@ -25,6 +25,7 @@ export type Store = {
   has_tatami_room: boolean
   stroller_accessible: boolean
   posted_by?: string
+  device_id?: string
   has_parking: boolean
   parking_detail: string | null
   has_private_room: boolean
@@ -43,7 +44,7 @@ export function useStores() {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const supabase = createPublicClient()
+        const supabase = createClient()
         const { data, error } = await supabase
           .from('stores')
           .select('*')

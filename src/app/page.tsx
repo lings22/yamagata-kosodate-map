@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -22,17 +21,11 @@ const Map = dynamic(() => import('@/components/Map'), {
 })
 
 export default function HomePage() {
-  const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const { stores, loading: storesLoading } = useStores()
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-
-  const handleLogout = async () => {
-    await signOut()
-    router.refresh()
-  }
 
   const [filters, setFilters] = useState({
     hasChair: false,
@@ -102,30 +95,13 @@ export default function HomePage() {
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
-              {!loading && user ? (
-                <>
-                  <Link
-                    href="/add-store"
-                    className="px-3 sm:px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition text-xs sm:text-sm font-medium"
-                  >
-                    <span className="hidden sm:inline">➕ 店舗を追加</span>
-                    <span className="sm:hidden">➕ 追加</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition"
-                  >
-                    ログアウト
-                  </button>
-                </>
-              ) : !loading ? (
-                <Link
-                  href="/login"
-                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
-                >
-                  ログイン
-                </Link>
-              ) : null}
+              <Link
+                href="/add-store"
+                className="px-3 sm:px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg transition text-xs sm:text-sm font-medium"
+              >
+                <span className="hidden sm:inline">➕ 店舗を追加</span>
+                <span className="sm:hidden">➕ 追加</span>
+              </Link>
             </div>
           </div>
         </div>

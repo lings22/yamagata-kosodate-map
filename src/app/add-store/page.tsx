@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/AuthContext'
+import { useDevice } from '@/contexts/DeviceContext'
 import { createClient } from '@/lib/supabase'
 
 type DuplicateStore = {
@@ -13,7 +13,7 @@ type DuplicateStore = {
 }
 
 export default function AddStorePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { deviceId } = useDevice()
   const router = useRouter()
   const autocompleteInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -46,13 +46,6 @@ export default function AddStorePage() {
   })
 
   useEffect(() => {
-    if (authLoading) return
-
-    if (!user) {
-      router.replace('/login')
-      return
-    }
-
     if (!window.google) {
       const script = document.createElement('script')
       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&language=ja`
@@ -66,7 +59,7 @@ export default function AddStorePage() {
     } else {
       initAutocomplete()
     }
-  }, [user, authLoading, router])
+  }, [])
 
   const initAutocomplete = () => {
     if (!autocompleteInputRef.current || !window.google) return
@@ -213,33 +206,33 @@ export default function AddStorePage() {
         address: formData.address,
         latitude: lat,
         longitude: lng,
-        has_chair_0_6m: formData.has_child_chair || formData.chair_count_0_6m > 0,
-        has_chair_6_18m: formData.has_child_chair || formData.chair_count_6_18m > 0,
-        has_chair_18m_3y: formData.has_child_chair || formData.chair_count_18m_3y > 0,
-        has_chair_3y_plus: formData.has_child_chair || formData.chair_count_3y_plus > 0,
-        chair_count_0_6m: formData.chair_count_0_6m,
-        chair_count_6_18m: formData.chair_count_6_18m,
-        chair_count_18m_3y: formData.chair_count_18m_3y,
-        chair_count_3y_plus: formData.chair_count_3y_plus,
+        has_chair_0_6m: formData.has_child_chair && formData.chair_count_0_6m > 0,
+        has_chair_6_18m: formData.has_child_chair && formData.chair_count_6_18m > 0,
+        has_chair_18m_3y: formData.has_child_chair && formData.chair_count_18m_3y > 0,
+        has_chair_3y_plus: formData.has_child_chair && formData.chair_count_3y_plus > 0,
+        chair_count_0_6m: formData.has_child_chair ? formData.chair_count_0_6m : 0,
+        chair_count_6_18m: formData.has_child_chair ? formData.chair_count_6_18m : 0,
+        chair_count_18m_3y: formData.has_child_chair ? formData.chair_count_18m_3y : 0,
+        chair_count_3y_plus: formData.has_child_chair ? formData.chair_count_3y_plus : 0,
         has_tatami_room: formData.has_tatami_room,
         has_parking: formData.has_parking,
-        parking_detail: formData.parking_detail,
+        parking_detail: formData.has_parking ? formData.parking_detail : null,
         has_nursing_room: formData.has_nursing_room,
-        nursing_room_detail: formData.nursing_room_detail,
+        nursing_room_detail: formData.has_nursing_room ? formData.nursing_room_detail : null,
         has_diaper_changing: formData.has_diaper_changing,
-        diaper_changing_detail: formData.diaper_changing_detail,
+        diaper_changing_detail: formData.has_diaper_changing ? formData.diaper_changing_detail : null,
         stroller_accessible: formData.stroller_accessible,
-        comment: formData.comment,
-        business_hours: formData.business_hours,
-        posted_by: user?.id,
+        comment: formData.comment || null,
+        device_id: deviceId,
       })
 
       if (error) throw error
 
-      router.push('/?added=true')
+      alert('店舗を追加しました！')
+      router.push('/')
     } catch (error) {
       console.error('保存エラー:', error)
-      throw error
+      alert('保存に失敗しました。もう一度お試しください。')
     } finally {
       setLoading(false)
     }
@@ -249,22 +242,6 @@ export default function AddStorePage() {
     setShowDuplicateModal(false)
     setLoading(true)
     await saveStore(formData.latitude, formData.longitude)
-  }
-
-  // 認証チェック中はローディング表示
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
   }
 
   return (
@@ -278,88 +255,94 @@ export default function AddStorePage() {
                 山形てくてくマップ
               </h1>
             </Link>
+            <Link
+              href="/"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg transition"
+            >
+              🗺️ 地図に戻る
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* メインコンテンツ */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">店舗を追加</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Step 1: 店舗検索 */}
-            {!showManualInput && !selectedPlace && (
-              <div>
+          <form onSubmit={handleSubmit}>
+            {/* Google Places Autocomplete */}
+            {!showManualInput ? (
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  店舗を検索
+                  🔍 店舗名で検索
                 </label>
                 <input
                   ref={autocompleteInputRef}
                   type="text"
-                  placeholder="店舗名またはジャンルを入力（例: バーミヤン、ファミレス）"
+                  placeholder="店舗名を入力してください（例：○○食堂）"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
                 />
+                <p className="mt-2 text-sm text-gray-500">
+                  Googleから店舗情報を自動取得します
+                </p>
                 <button
                   type="button"
                   onClick={handleManualInput}
                   className="mt-3 text-sm text-orange-500 hover:underline"
                 >
-                  見つからない場合は手動で入力
+                  見つからない場合は手動で入力 →
                 </button>
               </div>
-            )}
-
-            {/* Step 2: 店舗情報フォーム */}
-            {(selectedPlace || showManualInput) && (
-              <>
-                {/* 基本情報 */}
+            ) : (
+              <div className="mb-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    店舗名 *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">店舗名 *</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
+                    placeholder="例：○○食堂"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
+                    required
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    住所 *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">住所 *</label>
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="例：山形県山形市○○1-2-3"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowManualInput(false)}
+                  className="text-sm text-orange-500 hover:underline"
+                >
+                  ← Google検索に戻る
+                </button>
+              </div>
+            )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    🕐 営業時間
-                  </label>
-                  <textarea
-                    value={formData.business_hours}
-                    onChange={(e) => setFormData({ ...formData, business_hours: e.target.value })}
-                    placeholder="例：11:00〜15:00 / 17:00〜22:00（定休日: 水曜）"
-                    rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-[#333333]"
-                  />
-                </div>
+            {/* 店舗情報が選択された場合、設備フォームを表示 */}
+            {(selectedPlace || showManualInput) && (
+              <>
+                {selectedPlace && (
+                  <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                    <p className="font-semibold text-green-800">✅ {formData.name}</p>
+                    <p className="text-sm text-green-700">{formData.address}</p>
+                  </div>
+                )}
 
-                {/* 設備情報 */}
-                <div className="border-t pt-6">
+                <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">設備情報</h3>
 
                   {/* 子ども椅子 */}
                   <div className="mb-6">
-                    <label className="flex items-center gap-2 mb-3">
+                    <label className="flex items-center gap-2 mb-2">
                       <input
                         type="checkbox"
                         checked={formData.has_child_chair}
@@ -369,7 +352,8 @@ export default function AddStorePage() {
                       <span className="text-sm font-medium text-gray-700">🪑 子ども椅子あり</span>
                     </label>
                     {formData.has_child_chair && (
-                      <div className="ml-6 space-y-3">
+                      <div className="ml-6 space-y-2 mt-2">
+                        <p className="text-sm text-gray-600 mb-2">年齢別の台数（わかる範囲で）:</p>
                         <div className="flex items-center gap-3">
                           <label className="text-sm text-gray-700 w-32">0-6ヶ月:</label>
                           <input
