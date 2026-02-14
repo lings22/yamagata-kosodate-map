@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   
-  // SupabaseクライアントをuseRefで管理（モジュールスコープではなく）
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
   if (!supabaseRef.current) {
     supabaseRef.current = createClient()
@@ -31,28 +30,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true
 
-    // 初回のセッション取得
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
+    // getUser()を使う（getSession()より確実）
+    supabase.auth.getUser()
+      .then(({ data: { user }, error }) => {
         if (!isMounted) return
         
         if (error) {
-          console.error('セッション取得エラー:', error)
+          console.error('ユーザー取得エラー:', error)
           setUser(null)
+          setIsAdmin(false)
           setLoading(false)
           return
         }
 
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
+        setUser(user)
         setLoading(false)
 
-        // ユーザーがいれば管理者チェック
-        if (currentUser) {
+        if (user) {
           supabase
             .from('profiles')
             .select('is_admin')
-            .eq('id', currentUser.id)
+            .eq('id', user.id)
             .maybeSingle()
             .then(({ data, error }) => {
               if (!isMounted) return
@@ -69,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch((err) => {
-        console.error('セッション初期化エラー:', err)
+        console.error('認証初期化エラー:', err)
         if (isMounted) {
           setUser(null)
           setIsAdmin(false)
@@ -77,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
-    // 認証状態の変更をリアルタイム監視
+    // 認証状態の変更を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!isMounted) return
@@ -85,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const currentUser = session?.user ?? null
         setUser(currentUser)
 
-        // ユーザーがいれば管理者チェック
         if (currentUser) {
           supabase
             .from('profiles')
@@ -108,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    // クリーンアップ
     return () => {
       isMounted = false
       subscription.unsubscribe()
