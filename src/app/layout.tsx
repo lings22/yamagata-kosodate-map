@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { DeviceProvider } from '@/contexts/DeviceContext'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: "山形てくてくマップ | 授乳室・おむつ替え台・子ども椅子情報",
@@ -42,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="antialiased">
+        <GoogleAnalytics />
         <DeviceProvider>
           {children}
         </DeviceProvider>
