@@ -26,6 +26,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map')
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showBanner, setShowBanner] = useState(true)
 
   const [filters, setFilters] = useState({
     hasChair: false,
@@ -106,6 +107,24 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      {/* 案内バナー */}
+      {showBanner && (
+        <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 flex items-center justify-between gap-3">
+          <p className="text-sm text-orange-800 leading-snug">
+            💡 <span className="font-semibold">てくてくマップはみんなで作るマップです。</span>
+            <span className="hidden sm:inline">お気に入りのお店を見つけたら、ぜひ「店舗を追加」から登録してください！</span>
+            <span className="sm:hidden">お気に入りのお店を見つけたら、ぜひ「追加」から登録してください！</span>
+          </p>
+          <button
+            onClick={() => setShowBanner(false)}
+            className="shrink-0 text-orange-400 hover:text-orange-600 text-lg leading-none"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* スマホ用タブ */}
       <div className="lg:hidden bg-white border-b border-gray-200">
